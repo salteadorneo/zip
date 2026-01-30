@@ -204,7 +204,6 @@ async function loadZipFromStorageOnInit() {
             }
 
             processZip(currentFiles);
-            console.log('ZIP restaurado desde storage');
         }
     } catch (error) {
         console.error('Error restaurando ZIP:', error);
@@ -581,7 +580,6 @@ function loadZipFromFile(event) {
     isLoadingZip = true;
 
     window.history.replaceState({}, document.title, window.location.pathname);
-    document.getElementById('urlInput').value = '';
 
     setLoading(true);
     console.log('Cargando archivo local:', file.name);
@@ -829,7 +827,6 @@ function clearZipAndReload() {
     activeFileButton = null;
     allDirectoryButtons = [];
     
-    document.getElementById('urlInput').value = '';
     document.getElementById('searchInput').value = '';
     
     hideResults();
@@ -949,7 +946,6 @@ export function calculateCompressionRatio(uncompressed, compressed) {
     return ((compressed / uncompressed - 1) * 100).toFixed(1);
 }
 
-// Exponer funciones globalmente para ser llamadas desde HTML
 window.clearZipAndReload = clearZipAndReload;
 window.loadZipFromUrl = loadZipFromUrl;
 window.loadZipFromFile = loadZipFromFile;
@@ -959,3 +955,4 @@ window.expandAllDirectories = expandAllDirectories;
 window.collapseAllDirectories = collapseAllDirectories;
 window.downloadCurrentFile = downloadCurrentFile;
 window.downloadZipFile = downloadZipFile;
+window.copyToClipboard = copyToClipboard;
