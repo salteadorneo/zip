@@ -65,9 +65,9 @@ function initFromQueryString() {
 
 function processZip(files) {
     const resultsSection = document.getElementById('results');
-    const fileList = document.getElementById('fileList');
+    const fileTree = document.getElementById('fileTree');
+    const emptyState = document.getElementById('emptyState');
     const filePreview = document.getElementById('filePreview');
-    const urlInput = document.getElementById('urlInput').value;
 
     const fileCount = files.filter(f => !f.isDir).length;
     const dirCount = files.filter(f => f.isDir).length;
@@ -77,47 +77,68 @@ function processZip(files) {
     document.getElementById('dirCount').textContent = dirCount;
     document.getElementById('totalSize').textContent = formatBytes(totalSize);
 
-    fileList.innerHTML = '';
-    filePreview.innerHTML = '';
-    filePreview.classList.add('hidden');
-
-    files.forEach((file) => {
-        const item = document.createElement('div');
-        item.className = 'file-item';
+    fileTree.innerHTML = '';
+    
+    // Construir árbol de directorios
+    const tree = {};
+    files.forEach(file => {
+        const parts = file.path.split('/').filter(p => p);
+        let current = tree;
         
-        const icon = file.isDir ? 'FOLDER' : 'FILE';
-        const name = file.path.split('/').pop() || file.path;
-
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'file-info';
-        fileInfo.innerHTML = '<div class="file-name">' + icon + ' ' + name + '</div>' + (file.isDir ? '' : '<div class="file-size">' + formatBytes(file.size) + '</div>');
-
-        item.appendChild(fileInfo);
-
-        if (!file.isDir) {
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'download-btn';
-            downloadBtn.textContent = 'Descargar';
-            downloadBtn.onclick = (e) => {
-                e.stopPropagation();
-                downloadFile(file, urlInput);
-            };
-            item.appendChild(downloadBtn);
-
-            item.style.cursor = 'pointer';
-            item.onclick = () => previewFile(file);
-        } else {
-            item.style.opacity = '0.7';
-        }
-
-        fileList.appendChild(item);
+        parts.forEach((part, index) => {
+            if (!current[part]) {
+                current[part] = { children: {}, file: null, isDir: true };
+            }
+            if (index === parts.length - 1 && !file.isDir) {
+                current[part] = { ...current[part], file: file, isDir: false };
+            }
+            current = current[part].children;
+        });
     });
 
+    // Renderizar árbol
+    function renderTree(node, level = 0) {
+        const items = Object.entries(node).sort((a, b) => {
+            const aIsDir = a[1].isDir;
+            const bIsDir = b[1].isDir;
+            if (aIsDir !== bIsDir) return bIsDir - aIsDir;
+            return a[0].localeCompare(b[0]);
+        });
+
+        items.forEach(([name, item]) => {
+            const div = document.createElement('div');
+            div.className = 'group';
+            
+            const icon = item.isDir ? '📁' : '📄';
+            const btn = document.createElement('button');
+            btn.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-zinc-100 text-sm truncate text-zinc-700 flex items-center gap-2';
+            btn.style.paddingLeft = (level * 16 + 8) + 'px';
+            btn.innerHTML = '<span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
+            
+            if (item.file && !item.isDir) {
+                btn.onclick = () => previewFile(item.file);
+                btn.className += ' hover:text-blue-600 cursor-pointer';
+            }
+            
+            div.appendChild(btn);
+            fileTree.appendChild(div);
+            
+            if (item.isDir && Object.keys(item.children).length > 0) {
+                renderTree(item.children, level + 1);
+            }
+        });
+    }
+
+    renderTree(tree);
+    emptyState.classList.add('hidden');
+    filePreview.classList.add('hidden');
     resultsSection.classList.remove('hidden');
 }
 
 function previewFile(file) {
     const preview = document.getElementById('filePreview');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewContent = document.getElementById('previewContent');
     const isText = isTextFile(file.path);
 
     let content = '';
@@ -129,18 +150,13 @@ function previewFile(file) {
             content = '[No se puede decodificar como texto]';
         }
     } else {
-        content = '[Archivo binario - no se puede previsualiziar]';
+        content = '[Archivo binario]';
     }
 
-    preview.innerHTML = '<div class="file-preview-header">' + file.path + '</div><div class="file-preview-content">' + escapeHtml(content) + '</div>';
+    previewTitle.textContent = file.path;
+    previewContent.textContent = content;
     preview.classList.remove('hidden');
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 function isTextFile(fileName) {
