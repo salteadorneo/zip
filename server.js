@@ -1,10 +1,67 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { request } = require('undici');
 
 const PORT = process.env.PORT || 3000;
+
+// Función para seguir redirecciones manualmente
+async function fetchWithRedirects(targetUrl, maxRedirects = 5) {
+    let currentUrl = targetUrl;
+    let redirectCount = 0;
+
+    while (redirectCount < maxRedirects) {
+        const urlObj = new URL(currentUrl);
+        const refererUrl = `${urlObj.protocol}//${urlObj.hostname}/`;
+
+        console.log(`  [Intento ${redirectCount + 1}] Fetching: ${currentUrl.substring(0, 80)}...`);
+
+        const response = await request(currentUrl, {
+            method: 'GET',
+            headersTimeout: 30000,
+            bodyTimeout: 30000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Cache-Control': 'no-cache',
+                'DNT': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Upgrade-Insecure-Requests': '1',
+                'Referer': refererUrl,
+                'Origin': refererUrl.replace(/\/$/, '')
+            }
+        });
+
+        console.log(`  ↳ Status: ${response.statusCode}`);
+
+        // Manejar redirecciones
+        if ([301, 302, 303, 307, 308].includes(response.statusCode)) {
+            const location = response.headers.location;
+            if (!location) {
+                throw new Error(`Redirect sin Location header (${response.statusCode})`);
+            }
+            currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).toString();
+            redirectCount++;
+            console.log(`  ↳ Redirect a: ${currentUrl.substring(0, 80)}...`);
+            continue;
+        }
+
+        // Si no es redirect y no es 2xx, error
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+            throw new Error(`HTTP ${response.statusCode}`);
+        }
+
+        return response;
+    }
+
+    throw new Error(`Demasiadas redirecciones (>${maxRedirects})`);
+}
 
 http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
@@ -33,17 +90,7 @@ http.createServer(async (req, res) => {
         console.log(`📥 Proxy request para: ${targetUrl.substring(0, 60)}...`);
 
         try {
-            const response = await request(targetUrl, {
-                method: 'GET',
-                headersTimeout: 30000,
-                bodyTimeout: 30000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'application/octet-stream, application/zip, */*',
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    'Referer': 'https://www.google.com/'
-                }
-            });
+            const response = await fetchWithRedirects(targetUrl);
 
             const headers = {
                 'Content-Type': response.headers['content-type'] || 'application/octet-stream',
@@ -54,6 +101,7 @@ http.createServer(async (req, res) => {
                 headers['Content-Length'] = response.headers['content-length'];
             }
 
+            console.log(`✅ Enviando respuesta (${response.statusCode})`);
             res.writeHead(response.statusCode, headers);
             response.body.pipe(res);
         } catch (err) {
