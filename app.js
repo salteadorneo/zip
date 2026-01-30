@@ -86,22 +86,22 @@ function loadZipFromWelcome() {
 
 function setupUrlInputAutoLoad() {
     const urlInput = document.getElementById('welcomeUrlInput');
-    
-    urlInput.addEventListener('input', function() {
+
+    urlInput.addEventListener('input', function () {
         clearTimeout(urlInputDebounceTimer);
         urlInputDebounceTimer = setTimeout(() => {
             loadZipFromWelcome();
         }, 500);
     });
-    
-    urlInput.addEventListener('blur', function() {
+
+    urlInput.addEventListener('blur', function () {
         clearTimeout(urlInputDebounceTimer);
         if (this.value.trim()) {
             loadZipFromWelcome();
         }
     });
-    
-    urlInput.addEventListener('paste', function() {
+
+    urlInput.addEventListener('paste', function () {
         clearTimeout(urlInputDebounceTimer);
         setTimeout(() => {
             if (this.value.trim()) {
@@ -114,7 +114,7 @@ function setupUrlInputAutoLoad() {
 function setupWelcomeDropZone() {
     const welcomeDropZone = document.getElementById('welcomeDropZone');
     if (!welcomeDropZone) return;
-    
+
     welcomeDropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -129,7 +129,7 @@ function setupWelcomeDropZone() {
         e.preventDefault();
         e.stopPropagation();
         welcomeDropZone.classList.remove('border-zinc-400', 'dark:border-zinc-600', 'bg-zinc-100', 'dark:bg-zinc-800');
-        
+
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             const fileInput = document.getElementById('welcomeFileInput');
@@ -140,7 +140,7 @@ function setupWelcomeDropZone() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('welcomeFileInput').addEventListener('change', loadZipFromFile);
     document.getElementById('fileInput').addEventListener('change', loadZipFromFile);
     setupUrlInputAutoLoad();
@@ -150,9 +150,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function processZip(files) {
     allDirectoryButtons = [];
-    
+
     showResults();
-    
+
     const resultsSection = document.getElementById('results');
     const fileTree = document.getElementById('fileTree');
     const emptyState = document.getElementById('emptyState');
@@ -170,7 +170,7 @@ function processZip(files) {
     document.getElementById('statusSize').textContent = formatBytes(totalSize);
     document.getElementById('statusCompressed').textContent = formatBytes(compressedSize);
     document.getElementById('statusRatio').textContent = ratio != 0 ? '(' + ratio + '%)' : '';
-    
+
     const statusCompressedMobile = document.getElementById('statusCompressedMobile');
     const statusRatioMobile = document.getElementById('statusRatioMobile');
     if (statusCompressedMobile) statusCompressedMobile.textContent = formatBytes(compressedSize);
@@ -191,12 +191,12 @@ function processZip(files) {
     }
 
     fileTree.innerHTML = '';
-    
+
     const tree = {};
     files.forEach(file => {
         const parts = file.path.split('/').filter(p => p);
         let current = tree;
-        
+
         parts.forEach((part, index) => {
             if (!current[part]) {
                 current[part] = { children: {}, file: null, isDir: true };
@@ -219,12 +219,12 @@ function processZip(files) {
 
         items.forEach(([name, item]) => {
             const div = document.createElement('div');
-            
+
             const icon = item.isDir ? '📁' : '📄';
             const btn = document.createElement('button');
             btn.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm truncate text-zinc-800 dark:text-zinc-100 flex items-center gap-2 transition-colors';
             btn.style.paddingLeft = (level * 16 + 8) + 'px';
-            
+
             if (item.file && !item.isDir) {
                 btn.innerHTML = '<span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
                 btn.onclick = () => previewFile(item.file, btn);
@@ -239,14 +239,14 @@ function processZip(files) {
                 btn.dataset.expanded = 'true';
                 btn.dataset.filePath = name;
                 div.appendChild(btn);
-                
+
                 if (hasChildren) {
                     allDirectoryButtons.push(btn);
-                    
+
                     const childrenDiv = document.createElement('div');
                     childrenDiv.className = 'directory-contents';
                     childrenDiv.dataset.expanded = 'true';
-                    
+
                     btn.onclick = () => {
                         const isExpanded = childrenDiv.dataset.expanded === 'true';
                         childrenDiv.dataset.expanded = isExpanded ? 'false' : 'true';
@@ -254,12 +254,12 @@ function processZip(files) {
                         const arrowSpan = btn.querySelector(':first-child');
                         arrowSpan.textContent = isExpanded ? '▶' : '▼';
                     };
-                    
+
                     div.appendChild(childrenDiv);
                     renderTree(item.children, level + 1, childrenDiv);
                 }
             }
-            
+
             targetContainer.appendChild(div);
         });
     }
@@ -278,7 +278,7 @@ function previewFile(file, buttonElement) {
     const isImage = isImageFile(file.path);
 
     let content = '';
-    
+
     if (isImage && file.data) {
         const blob = new Blob([file.data], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
@@ -305,13 +305,13 @@ function previewFile(file, buttonElement) {
     previewTitle.textContent = file.path;
     preview.classList.remove('hidden');
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    
+
     window.currentPreviewFile = file;
-    
+
     if (activeFileButton) {
         activeFileButton.classList.remove('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
     }
-    
+
     if (buttonElement) {
         buttonElement.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
         activeFileButton = buttonElement;
@@ -352,7 +352,7 @@ async function loadZipFromUrl() {
         console.log('Usando proxy:', proxyUrl);
 
         const response = await fetch(proxyUrl);
-        
+
         if (!response.ok) {
             throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
@@ -372,7 +372,7 @@ async function loadZipFromUrl() {
 
         for (const path of entries) {
             const file = loaded.files[path];
-            
+
             if (file.dir) {
                 currentFiles.push({
                     path: path,
@@ -425,7 +425,7 @@ function loadZipFromFile(event) {
     currentZipBlob = file;
     currentFiles = [];
     isLoadingZip = true;
-    
+
     window.history.replaceState({}, document.title, window.location.pathname);
     document.getElementById('urlInput').value = '';
 
@@ -452,7 +452,7 @@ function loadZipFromFile(event) {
 
             for (const path of entries) {
                 const fileEntry = loaded.files[path];
-                
+
                 if (fileEntry.dir) {
                     currentFiles.push({
                         path: path,
@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('dragover');
-            
+
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 fileInput.files = files;
@@ -530,7 +530,7 @@ document.addEventListener('dragover', (e) => {
 document.addEventListener('drop', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         const zipFile = Array.from(files).find(f => f.name.toLowerCase().endsWith('.zip'));
@@ -539,7 +539,7 @@ document.addEventListener('drop', (e) => {
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(zipFile);
             fileInput.files = dataTransfer.files;
-            
+
             const event = new Event('change', { bubbles: true });
             fileInput.dispatchEvent(event);
         }
@@ -559,19 +559,19 @@ function copyToClipboard() {
         showError('No hay archivo seleccionado');
         return;
     }
-    
+
     const file = window.currentPreviewFile;
-    
+
     if (!isTextFile(file.path)) {
         showError('Solo se pueden copiar archivos de texto');
         return;
     }
-    
+
     if (!file.data) {
         showError('No hay datos del archivo');
         return;
     }
-    
+
     try {
         const text = new TextDecoder().decode(file.data);
         navigator.clipboard.writeText(text).then(() => {
@@ -586,7 +586,7 @@ function copyToClipboard() {
 
 function downloadFile(file) {
     console.log('Descargando: ' + file.path);
-    
+
     if (!file.data) {
         showError('No hay datos del archivo para descargar');
         return;
@@ -628,7 +628,7 @@ function filterFileTree(searchTerm) {
             btn.parentElement.style.display = '';
             btn.classList.remove('opacity-50');
         });
-        
+
         fileTree.querySelectorAll('.directory-contents').forEach(dir => {
             if (dir.dataset.expanded === 'true') {
                 dir.style.display = 'block';
@@ -636,7 +636,7 @@ function filterFileTree(searchTerm) {
                 dir.style.display = 'none';
             }
         });
-        
+
         const message = fileTree.querySelector('.search-no-results');
         if (message) message.remove();
         return;
@@ -653,7 +653,7 @@ function filterFileTree(searchTerm) {
     if (matchedButtons.length === 0) {
         allButtons.forEach(btn => btn.parentElement.style.display = 'none');
         fileTree.querySelectorAll('.directory-contents').forEach(dir => dir.style.display = 'none');
-        
+
         const existingMessage = fileTree.querySelector('.search-no-results');
         if (!existingMessage) {
             const message = document.createElement('div');
@@ -672,22 +672,22 @@ function filterFileTree(searchTerm) {
 
     matchedButtons.forEach(matchedBtn => {
         let current = matchedBtn.parentElement;
-        
+
         while (current && current !== fileTree) {
             current.style.display = '';
-            
+
             if (current.classList.contains('directory-contents')) {
                 current.style.display = 'block';
             }
-            
+
             const sibling = current.querySelector('button[data-file-path]');
             if (sibling && sibling !== matchedBtn) {
                 sibling.classList.add('opacity-50');
             }
-            
+
             current = current.parentElement;
         }
-        
+
         matchedBtn.classList.remove('opacity-50');
     });
 
@@ -714,7 +714,7 @@ function downloadZipFile() {
         showError('No hay archivo ZIP cargado');
         return;
     }
-    
+
     const url = URL.createObjectURL(currentZipBlob);
     const link = document.createElement('a');
     link.href = url;
