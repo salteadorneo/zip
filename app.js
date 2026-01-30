@@ -56,6 +56,7 @@ let currentFiles = [];
 let currentZipName = '';
 let activeFileButton = null;
 let allDirectoryButtons = [];
+let currentZipBlob = null;
 
 function initFromQueryString() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -78,11 +79,17 @@ function processZip(files) {
     const fileCount = files.filter(f => !f.isDir).length;
     const dirCount = files.filter(f => f.isDir).length;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+    const compressedSize = currentZipBlob ? currentZipBlob.size : 0;
+    const ratio = compressedSize > 0 ? ((1 - compressedSize / totalSize) * 100).toFixed(1) : 0;
+    const zipDate = new Date().toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
     document.getElementById('fileName').textContent = currentZipName;
     document.getElementById('statusFileCount').textContent = fileCount;
     document.getElementById('statusDirCount').textContent = dirCount;
     document.getElementById('statusSize').textContent = formatBytes(totalSize);
+    document.getElementById('statusCompressed').textContent = formatBytes(compressedSize);
+    document.getElementById('statusRatio').textContent = ratio + '%';
+    document.getElementById('statusDate').textContent = zipDate;
 
     // Deshabilitar botones de expandir/contraer si no hay directorios
     const expandBtn = document.getElementById('expandBtn');
@@ -293,6 +300,7 @@ async function loadZipFromUrl() {
         console.log('Respuesta OK');
         const arrayBuffer = await response.arrayBuffer();
         console.log('Datos recibidos:', formatBytes(arrayBuffer.byteLength));
+        currentZipBlob = new Blob([arrayBuffer], { type: 'application/zip' });
 
         console.log('Procesando ZIP...');
         const zip = new JSZip();
@@ -352,6 +360,7 @@ async function loadZipFromFile(event) {
 
     setLoading(true);
     console.log('Cargando archivo local:', file.name);
+    currentZipBlob = file;
 
     try {
         await ensureZipLoaded();
