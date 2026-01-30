@@ -80,9 +80,24 @@ function processZip(files) {
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
 
     document.getElementById('fileName').textContent = currentZipName;
-    document.getElementById('fileCount').textContent = fileCount;
-    document.getElementById('dirCount').textContent = dirCount;
-    document.getElementById('totalSize').textContent = formatBytes(totalSize);
+    document.getElementById('statusFileCount').textContent = fileCount;
+    document.getElementById('statusDirCount').textContent = dirCount;
+    document.getElementById('statusSize').textContent = formatBytes(totalSize);
+
+    // Deshabilitar botones de expandir/contraer si no hay directorios
+    const expandBtn = document.getElementById('expandBtn');
+    const collapseBtn = document.getElementById('collapseBtn');
+    if (dirCount === 0) {
+        expandBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        collapseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        expandBtn.onclick = null;
+        collapseBtn.onclick = null;
+    } else {
+        expandBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        collapseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        expandBtn.onclick = expandAllDirectories;
+        collapseBtn.onclick = collapseAllDirectories;
+    }
 
     fileTree.innerHTML = '';
     
