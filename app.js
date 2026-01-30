@@ -9,6 +9,17 @@ const TEXT_EXTENSIONS = [
 let currentZip = null;
 let currentFiles = [];
 
+// Auto-cargar ZIP desde parámetro URL
+function initFromQueryString() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const zipUrl = urlParams.get('url');
+    if (zipUrl) {
+        document.getElementById('urlInput').value = decodeURIComponent(zipUrl);
+        // Usar setTimeout para asegurar que el DOM está listo
+        setTimeout(loadZipFromUrl, 100);
+    }
+}
+
 function formatBytes(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -539,4 +550,5 @@ document.addEventListener('drop', async (e) => {
 
 window.addEventListener('load', () => {
     console.log('ZIP Preview v2.0.0 - Usando zip.js + undici');
+    initFromQueryString();
 });

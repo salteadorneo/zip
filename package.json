@@ -1,12 +1,12 @@
 {
   "name": "extractfile-zip",
   "version": "1.0.0",
-  "description": "Preview de archivos ZIP sin descargar - Serverless",
-  "main": "index.html",
+  "description": "Preview de archivos ZIP sin descargar",
+  "main": "server.js",
   "scripts": {
-    "dev": "http-server -c-1",
+    "dev": "node server.js",
     "dev:https": "node server-https.js",
-    "start": "http-server -c-1"
+    "start": "node server.js"
   },
   "keywords": [
     "zip",
