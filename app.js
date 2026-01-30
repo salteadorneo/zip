@@ -55,6 +55,7 @@ let currentZip = null;
 let currentFiles = [];
 let currentZipName = '';
 let activeFileButton = null;
+let allDirectoryButtons = [];
 
 function initFromQueryString() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -66,6 +67,9 @@ function initFromQueryString() {
 }
 
 function processZip(files) {
+    // Limpiar array de directorios previos
+    allDirectoryButtons = [];
+    
     const resultsSection = document.getElementById('results');
     const fileTree = document.getElementById('fileTree');
     const emptyState = document.getElementById('emptyState');
@@ -100,7 +104,8 @@ function processZip(files) {
     });
 
     // Renderizar árbol
-    function renderTree(node, level = 0) {
+    function renderTree(node, level = 0, container = null) {
+        const targetContainer = container || fileTree;
         const items = Object.entries(node).sort((a, b) => {
             const aIsDir = a[1].isDir;
             const bIsDir = b[1].isDir;
@@ -110,26 +115,51 @@ function processZip(files) {
 
         items.forEach(([name, item]) => {
             const div = document.createElement('div');
-            div.className = 'group';
             
             const icon = item.isDir ? '📁' : '📄';
             const btn = document.createElement('button');
             btn.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm truncate text-zinc-800 dark:text-zinc-100 flex items-center gap-2 transition-colors';
             btn.style.paddingLeft = (level * 16 + 8) + 'px';
-            btn.innerHTML = '<span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
             
             if (item.file && !item.isDir) {
+                // Es un archivo
+                btn.innerHTML = '<span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
                 btn.onclick = () => previewFile(item.file, btn);
                 btn.className += ' hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer';
                 btn.dataset.filePath = item.file.path;
+                div.appendChild(btn);
+            } else if (item.isDir) {
+                // Es un directorio
+                const hasChildren = Object.keys(item.children).length > 0;
+                const arrow = hasChildren ? '▼' : '';
+                btn.innerHTML = '<span class="flex-shrink-0 w-4">' + arrow + '</span><span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
+                btn.className += ' cursor-pointer';
+                btn.dataset.expanded = 'true';
+                
+                div.appendChild(btn);
+                
+                if (hasChildren) {
+                    // Registrar botón en array global
+                    allDirectoryButtons.push(btn);
+                    
+                    const childrenDiv = document.createElement('div');
+                    childrenDiv.className = 'directory-contents';
+                    childrenDiv.dataset.expanded = 'true';
+                    
+                    btn.onclick = () => {
+                        const isExpanded = childrenDiv.dataset.expanded === 'true';
+                        childrenDiv.dataset.expanded = isExpanded ? 'false' : 'true';
+                        childrenDiv.style.display = isExpanded ? 'none' : 'block';
+                        const arrowSpan = btn.querySelector(':first-child');
+                        arrowSpan.textContent = isExpanded ? '▶' : '▼';
+                    };
+                    
+                    div.appendChild(childrenDiv);
+                    renderTree(item.children, level + 1, childrenDiv);
+                }
             }
             
-            div.appendChild(btn);
-            fileTree.appendChild(div);
-            
-            if (item.isDir && Object.keys(item.children).length > 0) {
-                renderTree(item.children, level + 1);
-            }
+            targetContainer.appendChild(div);
         });
     }
 
@@ -418,4 +448,32 @@ function downloadFile(file) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     showSuccess('Archivo descargado: ' + link.download);
+}
+
+function expandAllDirectories() {
+    allDirectoryButtons.forEach(btn => {
+        const childrenDiv = btn.nextElementSibling;
+        if (childrenDiv && childrenDiv.classList.contains('directory-contents')) {
+            childrenDiv.style.display = 'block';
+            childrenDiv.dataset.expanded = 'true';
+            const arrowSpan = btn.querySelector(':first-child');
+            if (arrowSpan) {
+                arrowSpan.textContent = '▼';
+            }
+        }
+    });
+}
+
+function collapseAllDirectories() {
+    allDirectoryButtons.forEach(btn => {
+        const childrenDiv = btn.nextElementSibling;
+        if (childrenDiv && childrenDiv.classList.contains('directory-contents')) {
+            childrenDiv.style.display = 'none';
+            childrenDiv.dataset.expanded = 'false';
+            const arrowSpan = btn.querySelector(':first-child');
+            if (arrowSpan) {
+                arrowSpan.textContent = '▶';
+            }
+        }
+    });
 }
