@@ -55,27 +55,27 @@
     <div class="h-screen flex flex-col">
         <!-- Header -->
         <header id="header" class="hidden border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-            <div class="px-4 py-4 flex items-center justify-between gap-4">
-                <div class="flex items-center gap-4 flex-1">
-                    <h1 class="text-2xl font-semibold whitespace-nowrap">ZIP Preview</h1>
+            <div class="px-4 py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4">
+                <div class="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+                    <h1 class="text-xl md:text-2xl font-semibold whitespace-nowrap flex-shrink-0">ZIP Preview</h1>
                     <input type="text" id="searchInput" placeholder="Buscar archivos..."
-                        class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 w-64"
+                        class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 flex-1 min-w-0 md:w-64"
                         oninput="filterFileTree(this.value)">
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 md:gap-3 flex-wrap md:flex-nowrap">
                     <input type="text" id="urlInput" placeholder="URL del ZIP"
-                        class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent w-48">
+                        class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent flex-1 md:flex-none md:w-48">
                     <button onclick="loadZipFromUrl()"
-                        class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950">Cargar</button>
+                        class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 whitespace-nowrap">Cargar</button>
 
                     <label for="fileInput"
-                        class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950">
+                        class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 whitespace-nowrap">
                         Subir
                     </label>
                     <input type="file" id="fileInput" accept=".zip" class="hidden">
 
                     <button onclick="downloadZipFile()"
-                        class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                        class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex-shrink-0"
                         title="Descargar ZIP original">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
                     </button>
@@ -184,9 +184,7 @@
             <span>Archivos: <span id="statusFileCount">0</span></span>
             <span>Carpetas: <span id="statusDirCount">0</span></span>
             <span>Tamaño: <span id="statusSize">0 B</span></span>
-            <span>Comprimido: <span id="statusCompressed">0 B</span></span>
-            <span>Ratio: <span id="statusRatio">0%</span></span>
-            <span>Modificado: <span id="statusDate">-</span></span>
+            <span>Comprimido: <span id="statusCompressed">0 B</span> <span id="statusRatio"></span></span>
         </footer>
     </div>
 
