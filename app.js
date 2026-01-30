@@ -1,6 +1,107 @@
 let isLoadingZip = false;
 let urlInputDebounceTimer = null;
 
+const STORAGE_KEYS = {
+    ZIP_URL: 'zip_last_url',
+    ZIP_BLOB: 'zip_blob_data',
+    ZIP_NAME: 'zip_name'
+};
+
+async function saveZipToStorage(blob, name, sourceUrl = null) {
+    try {
+        if (blob.size > 5 * 1024 * 1024 && 'indexedDB' in window) {
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open('ZipStorage', 1);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+                req.onupgradeneeded = (e) => {
+                    const store = e.target.result.createObjectStore('zips', { keyPath: 'id' });
+                };
+            });
+
+            const store = db.transaction('zips', 'readwrite').objectStore('zips');
+            store.clear();
+            store.add({ id: 'current', blob, name, sourceUrl, timestamp: Date.now() });
+            
+            localStorage.setItem(STORAGE_KEYS.ZIP_NAME, name);
+            if (sourceUrl) localStorage.setItem(STORAGE_KEYS.ZIP_URL, sourceUrl);
+            localStorage.setItem('zip_in_idb', 'true');
+        } else {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.ZIP_BLOB, e.target.result);
+                    localStorage.setItem(STORAGE_KEYS.ZIP_NAME, name);
+                    if (sourceUrl) localStorage.setItem(STORAGE_KEYS.ZIP_URL, sourceUrl);
+                    localStorage.removeItem('zip_in_idb');
+                } catch (e) {
+                    console.warn('No se puede guardar en localStorage:', e.message);
+                }
+            };
+            reader.readAsDataURL(blob);
+        }
+    } catch (e) {
+        console.warn('Error guardando ZIP:', e.message);
+    }
+}
+
+async function loadZipFromStorage() {
+    try {
+        if (localStorage.getItem('zip_in_idb') === 'true') {
+            try {
+                const db = await new Promise((resolve, reject) => {
+                    const req = indexedDB.open('ZipStorage', 1);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                });
+
+                const store = db.transaction('zips', 'readonly').objectStore('zips');
+                const data = await new Promise((resolve, reject) => {
+                    const req = store.get('current');
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                });
+
+                if (data) {
+                    currentZipBlob = data.blob;
+                    currentZipName = data.name;
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Error cargando desde IndexedDB:', e.message);
+            }
+        }
+
+        const dataUrl = localStorage.getItem(STORAGE_KEYS.ZIP_BLOB);
+        if (dataUrl) {
+            const response = await fetch(dataUrl);
+            currentZipBlob = await response.blob();
+            currentZipName = localStorage.getItem(STORAGE_KEYS.ZIP_NAME) || 'archivo.zip';
+            return true;
+        }
+
+        return false;
+    } catch (e) {
+        console.warn('Error restaurando ZIP:', e.message);
+        return false;
+    }
+}
+
+function clearZipStorage() {
+    localStorage.removeItem(STORAGE_KEYS.ZIP_BLOB);
+    localStorage.removeItem(STORAGE_KEYS.ZIP_URL);
+    localStorage.removeItem(STORAGE_KEYS.ZIP_NAME);
+    localStorage.removeItem('zip_in_idb');
+
+    if ('indexedDB' in window) {
+        try {
+            indexedDB.deleteDatabase('ZipStorage');
+        } catch (e) {
+            console.warn('Error borrando IndexedDB:', e.message);
+        }
+    }
+}
+
 function ensureZipLoaded() {
     return new Promise((resolve) => {
         if (typeof JSZip !== 'undefined') {
@@ -58,6 +159,57 @@ function initFromQueryString() {
     if (zipUrl) {
         document.getElementById('urlInput').value = decodeURIComponent(zipUrl);
         setTimeout(loadZipFromUrl, 100);
+    } else {
+        loadZipFromStorageOnInit();
+    }
+}
+
+async function loadZipFromStorageOnInit() {
+    try {
+        const loaded = await loadZipFromStorage();
+        if (loaded && currentZipBlob) {
+            setLoading(true);
+            await ensureZipLoaded();
+            
+            if (typeof JSZip === 'undefined') {
+                throw new Error('JSZip no se cargo');
+            }
+
+            const arrayBuffer = await currentZipBlob.arrayBuffer();
+            const zip = new JSZip();
+            const loadedZip = await zip.loadAsync(arrayBuffer);
+
+            currentFiles = [];
+            const entries = Object.keys(loadedZip.files);
+
+            for (const path of entries) {
+                const file = loadedZip.files[path];
+
+                if (file.dir) {
+                    currentFiles.push({
+                        path: path,
+                        size: 0,
+                        data: null,
+                        isDir: true
+                    });
+                } else {
+                    const data = await file.async('uint8array');
+                    currentFiles.push({
+                        path: path,
+                        size: file.uncompressedSize || data.length,
+                        data: data,
+                        isDir: false
+                    });
+                }
+            }
+
+            processZip(currentFiles);
+            console.log('ZIP restaurado desde storage');
+        }
+    } catch (error) {
+        console.error('Error restaurando ZIP:', error);
+    } finally {
+        setLoading(false);
     }
 }
 
@@ -394,8 +546,10 @@ async function loadZipFromUrl() {
         const fileCount = currentFiles.filter(f => !f.isDir).length;
         const dirCount = currentFiles.filter(f => f.isDir).length;
         console.log('ZIP procesado:', currentFiles.length, 'elementos (', fileCount, 'archivos,', dirCount, 'dirs )');
+        
+        await saveZipToStorage(currentZipBlob, currentZipName, urlInput);
+        
         processZip(currentFiles);
-        showSuccess('ZIP cargado correctamente');
 
     } catch (error) {
         console.error('Error:', error);
@@ -474,8 +628,10 @@ function loadZipFromFile(event) {
             const fileCount = currentFiles.filter(f => !f.isDir).length;
             const dirCount = currentFiles.filter(f => f.isDir).length;
             console.log('ZIP procesado:', currentFiles.length, 'elementos (', fileCount, 'archivos,', dirCount, 'dirs )');
+            
+            await saveZipToStorage(currentZipBlob, currentZipName);
+            
             processZip(currentFiles);
-            showSuccess('Archivo cargado correctamente');
 
         } catch (error) {
             console.error('Error:', error);
@@ -489,38 +645,7 @@ function loadZipFromFile(event) {
     reader.readAsArrayBuffer(file);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initFromQueryString();
 
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', loadZipFromFile);
-    }
-
-    const dropZone = document.getElementById('dropZone');
-    if (dropZone) {
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                const event = new Event('change', { bubbles: true });
-                fileInput.dispatchEvent(event);
-            }
-        });
-    }
-});
 
 document.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -695,6 +820,22 @@ function filterFileTree(searchTerm) {
     if (message) message.remove();
 }
 
+function clearZipAndReload() {
+    clearZipStorage();
+    currentZip = null;
+    currentFiles = [];
+    currentZipName = '';
+    currentZipBlob = null;
+    activeFileButton = null;
+    allDirectoryButtons = [];
+    
+    document.getElementById('urlInput').value = '';
+    document.getElementById('searchInput').value = '';
+    
+    hideResults();
+    window.location.href = window.location.pathname;
+}
+
 function collapseAllDirectories() {
     allDirectoryButtons.forEach(btn => {
         const childrenDiv = btn.nextElementSibling;
@@ -807,3 +948,14 @@ export function calculateCompressionRatio(uncompressed, compressed) {
     if (uncompressed === 0) return 0;
     return ((compressed / uncompressed - 1) * 100).toFixed(1);
 }
+
+// Exponer funciones globalmente para ser llamadas desde HTML
+window.clearZipAndReload = clearZipAndReload;
+window.loadZipFromUrl = loadZipFromUrl;
+window.loadZipFromFile = loadZipFromFile;
+window.previewFile = previewFile;
+window.filterFileTree = filterFileTree;
+window.expandAllDirectories = expandAllDirectories;
+window.collapseAllDirectories = collapseAllDirectories;
+window.downloadCurrentFile = downloadCurrentFile;
+window.downloadZipFile = downloadZipFile;
