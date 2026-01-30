@@ -54,7 +54,7 @@
 <body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 h-screen overflow-hidden">
     <div class="h-screen flex flex-col">
         <!-- Header -->
-        <header class="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <header id="header" class="hidden border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
             <div class="px-4 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold">ZIP Preview</h1>
@@ -96,17 +96,32 @@
         </div>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-hidden w-full">
+        <main class="flex-1 overflow-hidden w-full flex flex-col">
+            <!-- Welcome Screen -->
+            <div id="welcomeScreen" class="flex-1 flex flex-col items-center justify-center gap-6 px-4">
+                <h1 class="text-4xl font-bold text-zinc-900 dark:text-zinc-50">ZIP Preview</h1>
+                <div class="flex flex-col gap-3 w-full max-w-sm">
+                    <input type="text" id="welcomeUrlInput" placeholder="Pega la URL del ZIP aquí"
+                        class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-4 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent w-full">
+                    <button onclick="loadZipFromWelcome()"
+                        class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2.5 rounded-md text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 w-full">Cargar desde URL</button>
+                    <label for="welcomeFileInput"
+                        class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2.5 rounded-md text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 w-full text-center cursor-pointer">
+                        Subir archivo ZIP
+                    </label>
+                    <input type="file" id="welcomeFileInput" accept=".zip" class="hidden">
+                </div>
+            </div>
 
             <!-- Results Section -->
-            <div id="results" class="hidden h-full">
+            <div id="results" class="hidden flex-1 overflow-hidden flex flex-col">
                 <!-- File Browser -->
                 <div
                     class="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col h-full">
                     <!-- Content Area -->
                     <div class="flex flex-1 overflow-hidden">
                         <!-- File Tree -->
-                        <div class="w-1/3 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+                        <div id="fileTreePanel" class="flex-1 border-r border-zinc-200 dark:border-zinc-800 flex flex-col" style="width: 33%;">
                             <div class="p-3 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
                                 <div class="flex items-center justify-between">
                                     <h3 class="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate flex-1"
@@ -126,8 +141,11 @@
                             </div>
                         </div>
 
+                        <!-- Splitter -->
+                        <div id="splitter" class="w-4 bg-gradient-to-r from-zinc-300 to-zinc-400 dark:from-zinc-700 dark:to-zinc-600 hover:from-zinc-400 hover:to-zinc-500 dark:hover:from-zinc-600 dark:hover:to-zinc-500 cursor-col-resize transition-colors flex-shrink-0" style="height: 100%; touch-action: none; box-shadow: inset -1px 0 0 rgba(0,0,0,0.1);" title="Arrastra para redimensionar"></div>
+
                         <!-- File Preview -->
-                        <div class="w-2/3 overflow-y-auto">
+                        <div id="previewPanel" class="flex-1 overflow-y-auto" style="width: 67%;">
                             <div id="filePreview" class="hidden p-3 h-full flex flex-col">
                                 <div
                                     class="mb-2 pb-2 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 py-1 flex items-center justify-between">
@@ -161,8 +179,8 @@
         </main>
 
         <!-- Status Bar -->
-        <footer
-            class="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 px-4 py-1.5 flex items-center gap-4 flex-wrap">
+        <footer id="statusBar"
+            class="hidden border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 px-4 py-1.5 flex items-center gap-4 flex-wrap">
             <span>Archivos: <span id="statusFileCount">0</span></span>
             <span>Carpetas: <span id="statusDirCount">0</span></span>
             <span>Tamaño: <span id="statusSize">0 B</span></span>

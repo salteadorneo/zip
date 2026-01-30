@@ -67,9 +67,40 @@ function initFromQueryString() {
     }
 }
 
+function showResults() {
+    document.getElementById('welcomeScreen').classList.add('hidden');
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('header').classList.remove('hidden');
+    document.getElementById('statusBar').classList.remove('hidden');
+}
+
+function hideResults() {
+    document.getElementById('welcomeScreen').classList.remove('hidden');
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('header').classList.add('hidden');
+    document.getElementById('statusBar').classList.add('hidden');
+}
+
+function loadZipFromWelcome() {
+    const urlInput = document.getElementById('welcomeUrlInput');
+    urlInput.value = urlInput.value.trim();
+    if (urlInput.value) {
+        document.getElementById('urlInput').value = urlInput.value;
+        loadZipFromUrl();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('welcomeFileInput').addEventListener('change', loadZipFromFile);
+    document.getElementById('fileInput').addEventListener('change', loadZipFromFile);
+    initSplitter();
+    initFromQueryString();
+});
+
 function processZip(files) {
-    // Limpiar array de directorios previos
     allDirectoryButtons = [];
+    
+    showResults();
     
     const resultsSection = document.getElementById('results');
     const fileTree = document.getElementById('fileTree');
