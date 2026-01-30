@@ -453,6 +453,36 @@ function downloadCurrentFile() {
     downloadFile(window.currentPreviewFile);
 }
 
+function copyToClipboard() {
+    if (!window.currentPreviewFile) {
+        showError('No hay archivo seleccionado');
+        return;
+    }
+    
+    const file = window.currentPreviewFile;
+    
+    if (!isTextFile(file.path)) {
+        showError('Solo se pueden copiar archivos de texto');
+        return;
+    }
+    
+    if (!file.data) {
+        showError('No hay datos del archivo');
+        return;
+    }
+    
+    try {
+        const text = new TextDecoder().decode(file.data);
+        navigator.clipboard.writeText(text).then(() => {
+            showSuccess('Contenido copiado al portapapeles');
+        }).catch(() => {
+            showError('No se pudo copiar al portapapeles');
+        });
+    } catch (error) {
+        showError('Error al copiar: ' + error.message);
+    }
+}
+
 function downloadFile(file) {
     console.log('Descargando: ' + file.path);
     
