@@ -92,9 +92,14 @@ http.createServer(async (req, res) => {
         try {
             const response = await fetchWithRedirects(targetUrl);
 
+            // Extraer nombre del archivo de la URL
+            const urlPath = new URL(targetUrl).pathname;
+            const fileName = urlPath.split('/').pop() || 'archivo.zip';
+
             const headers = {
                 'Content-Type': response.headers['content-type'] || 'application/octet-stream',
-                'Cache-Control': 'public, max-age=86400'
+                'Cache-Control': 'public, max-age=86400',
+                'Content-Disposition': `attachment; filename="${fileName}"`
             };
 
             if (response.headers['content-length']) {
