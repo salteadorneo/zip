@@ -1,0 +1,27 @@
+{
+  "name": "extractfile-zip",
+  "version": "1.0.0",
+  "description": "Preview de archivos ZIP sin descargar - Serverless",
+  "main": "index.html",
+  "scripts": {
+    "dev": "http-server -c-1",
+    "dev:https": "node server-https.js",
+    "start": "http-server -c-1"
+  },
+  "keywords": [
+    "zip",
+    "preview",
+    "serverless"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "selfsigned": "^5.5.0"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "undici": "^7.19.2",
+    "yauzl": "^3.2.0"
+  }
+}
