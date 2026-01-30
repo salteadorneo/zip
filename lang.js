@@ -1,4 +1,3 @@
-// Language configuration - English by default
 const lang = {
   "title": "ZIP",
   "description": "Explore ZIP files without downloading",
