@@ -113,14 +113,20 @@ function processZip(files) {
     const dirCount = files.filter(f => f.isDir).length;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
     const compressedSize = currentZipBlob ? currentZipBlob.size : 0;
-    const ratio = compressedSize > 0 ? ((1 - compressedSize / totalSize) * 100).toFixed(1) : 0;
+    const ratio = totalSize > 0 ? ((compressedSize / totalSize - 1) * 100).toFixed(1) : 0;
 
     document.getElementById('fileName').textContent = currentZipName;
     document.getElementById('statusFileCount').textContent = fileCount;
     document.getElementById('statusDirCount').textContent = dirCount;
     document.getElementById('statusSize').textContent = formatBytes(totalSize);
     document.getElementById('statusCompressed').textContent = formatBytes(compressedSize);
-    document.getElementById('statusRatio').textContent = ratio > 0 ? '(' + ratio + '%)' : '';
+    document.getElementById('statusRatio').textContent = ratio != 0 ? '(' + ratio + '%)' : '';
+    
+    // Actualizar también los elementos de mobile
+    const statusCompressedMobile = document.getElementById('statusCompressedMobile');
+    const statusRatioMobile = document.getElementById('statusRatioMobile');
+    if (statusCompressedMobile) statusCompressedMobile.textContent = formatBytes(compressedSize);
+    if (statusRatioMobile) statusRatioMobile.textContent = ratio != 0 ? '(' + ratio + '%)' : '';
 
     // Deshabilitar botones de expandir/contraer si no hay directorios
     const expandBtn = document.getElementById('expandBtn');
@@ -502,6 +508,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('load', () => {
     console.log('ZIP Preview v2.0.0 cargado');
+});
+
+// Drag and drop en todo el documento
+document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+});
+
+document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        const zipFile = Array.from(files).find(f => f.name.toLowerCase().endsWith('.zip'));
+        if (zipFile) {
+            const fileInput = document.getElementById('fileInput');
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(zipFile);
+            fileInput.files = dataTransfer.files;
+            
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+        }
+    }
 });
 
 // Descargar archivo individual del ZIP
