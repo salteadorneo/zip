@@ -1,5 +1,6 @@
 // Variables globales
 let isLoadingZip = false;
+let urlInputDebounceTimer = null;
 
 // Esperar a que JSZip cargue
 function ensureZipLoaded() {
@@ -93,9 +94,70 @@ function loadZipFromWelcome() {
     }
 }
 
+function setupUrlInputAutoLoad() {
+    const urlInput = document.getElementById('welcomeUrlInput');
+    
+    // Debounce en tiempo de escritura (500ms)
+    urlInput.addEventListener('input', function() {
+        clearTimeout(urlInputDebounceTimer);
+        urlInputDebounceTimer = setTimeout(() => {
+            loadZipFromWelcome();
+        }, 500);
+    });
+    
+    // Carga inmediata en blur
+    urlInput.addEventListener('blur', function() {
+        clearTimeout(urlInputDebounceTimer);
+        if (this.value.trim()) {
+            loadZipFromWelcome();
+        }
+    });
+    
+    // Carga inmediata al pegar
+    urlInput.addEventListener('paste', function() {
+        clearTimeout(urlInputDebounceTimer);
+        setTimeout(() => {
+            if (this.value.trim()) {
+                loadZipFromWelcome();
+            }
+        }, 10);
+    });
+}
+
+function setupWelcomeDropZone() {
+    const welcomeDropZone = document.getElementById('welcomeDropZone');
+    if (!welcomeDropZone) return;
+    
+    welcomeDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        welcomeDropZone.classList.add('border-zinc-400', 'dark:border-zinc-600', 'bg-zinc-100', 'dark:bg-zinc-800');
+    });
+
+    welcomeDropZone.addEventListener('dragleave', () => {
+        welcomeDropZone.classList.remove('border-zinc-400', 'dark:border-zinc-600', 'bg-zinc-100', 'dark:bg-zinc-800');
+    });
+
+    welcomeDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        welcomeDropZone.classList.remove('border-zinc-400', 'dark:border-zinc-600', 'bg-zinc-100', 'dark:bg-zinc-800');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const fileInput = document.getElementById('welcomeFileInput');
+            fileInput.files = files;
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('welcomeFileInput').addEventListener('change', loadZipFromFile);
     document.getElementById('fileInput').addEventListener('change', loadZipFromFile);
+    setupUrlInputAutoLoad();
+    setupWelcomeDropZone();
     initFromQueryString();
 });
 
