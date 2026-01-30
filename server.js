@@ -153,8 +153,12 @@ http.createServer(async (req, res) => {
         return;
     }
 
-    // Servir archivos estaticos
     let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+    
+    if (pathname.startsWith('/node_modules/')) {
+        filePath = path.join(__dirname, pathname);
+    }
+    
     const ext = path.extname(filePath);
 
     let contentType = 'text/html';
