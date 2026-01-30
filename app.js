@@ -67,6 +67,7 @@ function processZip(files) {
     const resultsSection = document.getElementById('results');
     const fileList = document.getElementById('fileList');
     const filePreview = document.getElementById('filePreview');
+    const urlInput = document.getElementById('urlInput').value;
 
     const fileCount = files.filter(f => !f.isDir).length;
     const dirCount = files.filter(f => f.isDir).length;
@@ -84,13 +85,26 @@ function processZip(files) {
         const item = document.createElement('div');
         item.className = 'file-item';
         
-        const icon = file.isDir ? 'Ì≥Å' : 'Ì≥Ñ';
+        const icon = file.isDir ? 'FOLDER' : 'FILE';
         const name = file.path.split('/').pop() || file.path;
-        const size = file.isDir ? '' : '<div class="file-size">' + formatBytes(file.size) + '</div>';
 
-        item.innerHTML = '<div class="file-info"><div class="file-name">' + icon + ' ' + name + '</div>' + size + '</div>';
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info';
+        fileInfo.innerHTML = '<div class="file-name">' + icon + ' ' + name + '</div>' + (file.isDir ? '' : '<div class="file-size">' + formatBytes(file.size) + '</div>');
+
+        item.appendChild(fileInfo);
 
         if (!file.isDir) {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.textContent = 'Descargar';
+            downloadBtn.onclick = (e) => {
+                e.stopPropagation();
+                downloadFile(file, urlInput);
+            };
+            item.appendChild(downloadBtn);
+
+            item.style.cursor = 'pointer';
             item.onclick = () => previewFile(file);
         } else {
             item.style.opacity = '0.7';
@@ -306,3 +320,24 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', () => {
     console.log('ZIP Preview v2.0.0 cargado');
 });
+
+// Descargar archivo individual del ZIP
+function downloadFile(file, zipUrl) {
+    console.log('Descargando: ' + file.path + ' desde ' + zipUrl);
+    
+    if (!file.data) {
+        alert('No hay datos del archivo para descargar');
+        return;
+    }
+
+    // Crear descarga directa del contenido ya cargado
+    const blob = new Blob([file.data], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.path.split('/').pop();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
