@@ -1,6 +1,3 @@
-import './lib/jszip.js'
-import { formatBytes, isTextFile, isImageFile } from './lib/core.js';
-
 let isLoadingZip = false;
 let urlInputDebounceTimer = null;
 
