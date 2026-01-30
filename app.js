@@ -93,7 +93,6 @@ function loadZipFromWelcome() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('welcomeFileInput').addEventListener('change', loadZipFromFile);
     document.getElementById('fileInput').addEventListener('change', loadZipFromFile);
-    initSplitter();
     initFromQueryString();
 });
 
@@ -188,7 +187,7 @@ function processZip(files) {
                 btn.innerHTML = '<span class="flex-shrink-0 w-4">' + arrow + '</span><span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
                 btn.className += ' cursor-pointer';
                 btn.dataset.expanded = 'true';
-                
+                btn.dataset.filePath = name;
                 div.appendChild(btn);
                 
                 if (hasChildren) {
@@ -547,6 +546,90 @@ function expandAllDirectories() {
             }
         }
     });
+}
+
+function filterFileTree(searchTerm) {
+    const fileTree = document.getElementById('fileTree');
+    const allButtons = fileTree.querySelectorAll('button[data-file-path]');
+    const searchLower = searchTerm.toLowerCase();
+
+    if (!searchTerm) {
+        // Restaurar vista original
+        allButtons.forEach(btn => {
+            btn.parentElement.style.display = '';
+            btn.classList.remove('opacity-50');
+        });
+        
+        fileTree.querySelectorAll('.directory-contents').forEach(dir => {
+            if (dir.dataset.expanded === 'true') {
+                dir.style.display = 'block';
+            } else {
+                dir.style.display = 'none';
+            }
+        });
+        
+        const message = fileTree.querySelector('.search-no-results');
+        if (message) message.remove();
+        return;
+    }
+
+    // Encontrar coincidencias
+    const matchedButtons = [];
+    allButtons.forEach(btn => {
+        const fileName = btn.dataset.filePath.split('/').pop().toLowerCase();
+        if (fileName.includes(searchLower)) {
+            matchedButtons.push(btn);
+        }
+    });
+
+    if (matchedButtons.length === 0) {
+        allButtons.forEach(btn => btn.parentElement.style.display = 'none');
+        fileTree.querySelectorAll('.directory-contents').forEach(dir => dir.style.display = 'none');
+        
+        const existingMessage = fileTree.querySelector('.search-no-results');
+        if (!existingMessage) {
+            const message = document.createElement('div');
+            message.className = 'search-no-results p-2 text-xs text-zinc-500 dark:text-zinc-400';
+            message.textContent = 'No se encontraron resultados';
+            fileTree.appendChild(message);
+        }
+        return;
+    }
+
+    // Ocultar todo primero
+    allButtons.forEach(btn => {
+        btn.parentElement.style.display = 'none';
+        btn.classList.remove('opacity-50');
+    });
+    fileTree.querySelectorAll('.directory-contents').forEach(dir => dir.style.display = 'none');
+
+    // Para cada coincidencia, mostrar ella y todos sus padres
+    matchedButtons.forEach(matchedBtn => {
+        let current = matchedBtn.parentElement;
+        
+        while (current && current !== fileTree) {
+            current.style.display = '';
+            
+            // Si es contenedor de directorio, mostrarlo
+            if (current.classList.contains('directory-contents')) {
+                current.style.display = 'block';
+            }
+            
+            // Buscar botón hermano en el mismo contenedor
+            const sibling = current.querySelector('button[data-file-path]');
+            if (sibling && sibling !== matchedBtn) {
+                sibling.classList.add('opacity-50');
+            }
+            
+            current = current.parentElement;
+        }
+        
+        // El botón encontrado no tiene opacidad
+        matchedBtn.classList.remove('opacity-50');
+    });
+
+    const message = fileTree.querySelector('.search-no-results');
+    if (message) message.remove();
 }
 
 function collapseAllDirectories() {
