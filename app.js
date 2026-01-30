@@ -144,21 +144,37 @@ function previewFile(file, buttonElement) {
     const previewTitle = document.getElementById('previewTitle');
     const previewContent = document.getElementById('previewContent');
     const isText = isTextFile(file.path);
+    const isImage = isImageFile(file.path);
 
     let content = '';
-    if (isText && file.data) {
+    
+    if (isImage && file.data) {
+        // Mostrar imagen
+        const blob = new Blob([file.data], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        previewContent.innerHTML = '<img src="' + url + '" alt="' + file.path + '" class="max-w-full max-h-full object-contain" />';
+        previewContent.style.display = 'flex';
+        previewContent.style.alignItems = 'center';
+        previewContent.style.justifyContent = 'center';
+    } else if (isText && file.data) {
+        // Mostrar texto
+        previewContent.style.display = 'block';
         try {
             const text = new TextDecoder().decode(file.data);
             content = text.length > 50000 ? text.substring(0, 50000) + '\n\n[...truncado...]' : text;
         } catch (e) {
             content = '[No se puede decodificar como texto]';
         }
+        previewContent.textContent = content;
     } else {
-        content = '[Archivo binario]';
+        // Archivo binario
+        previewContent.style.display = 'flex';
+        previewContent.style.alignItems = 'center';
+        previewContent.style.justifyContent = 'center';
+        previewContent.textContent = '[Archivo binario]';
     }
 
     previewTitle.textContent = file.path;
-    previewContent.textContent = content;
     preview.classList.remove('hidden');
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
@@ -187,6 +203,12 @@ function isTextFile(fileName) {
     ];
     const ext = fileName.split('.').pop().toLowerCase();
     return textExtensions.includes(ext);
+}
+
+function isImageFile(fileName) {
+    const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+    const ext = fileName.split('.').pop().toLowerCase();
+    return imageExtensions.includes(ext);
 }
 
 async function loadZipFromUrl() {
