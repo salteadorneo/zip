@@ -2,10 +2,13 @@
   "name": "zip",
   "version": "1.0.0",
   "description": "Explore, preview and download ZIP files in the browser",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "dev": "node --watch-path=. server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test",
+    "test:watch": "node --watch-path=. --test"
   },
   "keywords": ["zip", "preview", "serverless"],
   "license": "ISC"

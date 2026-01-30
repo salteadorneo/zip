@@ -1,4 +1,5 @@
 import './lib/jszip.js'
+import { formatBytes, isTextFile, isImageFile } from './lib/core.js';
 
 let isLoadingZip = false;
 let urlInputDebounceTimer = null;
@@ -20,14 +21,6 @@ function ensureZipLoaded() {
             }, 5000);
         }
     });
-}
-
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
 
 function showError(message) {
@@ -326,24 +319,6 @@ function previewFile(file, buttonElement) {
         buttonElement.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
         activeFileButton = buttonElement;
     }
-}
-
-function isTextFile(fileName) {
-    const textExtensions = [
-        'txt', 'md', 'markdown', 'json', 'xml', 'csv', 'html', 'htm', 'css',
-        'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'h', 'php',
-        'rb', 'go', 'rs', 'sh', 'bash', 'yml', 'yaml', 'sql', 'r', 'log',
-        'env', 'properties', 'gradle', 'maven', 'dockerfile', 'gitignore',
-        'editorconfig', 'eslintrc', 'prettierrc', 'babelrc'
-    ];
-    const ext = fileName.split('.').pop().toLowerCase();
-    return textExtensions.includes(ext);
-}
-
-function isImageFile(fileName) {
-    const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
-    const ext = fileName.split('.').pop().toLowerCase();
-    return imageExtensions.includes(ext);
 }
 
 async function loadZipFromUrl() {
