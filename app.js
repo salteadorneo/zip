@@ -1,8 +1,8 @@
-// Variables globales
+import './lib/jszip.js'
+
 let isLoadingZip = false;
 let urlInputDebounceTimer = null;
 
-// Esperar a que JSZip cargue
 function ensureZipLoaded() {
     return new Promise((resolve) => {
         if (typeof JSZip !== 'undefined') {
@@ -97,7 +97,6 @@ function loadZipFromWelcome() {
 function setupUrlInputAutoLoad() {
     const urlInput = document.getElementById('welcomeUrlInput');
     
-    // Debounce en tiempo de escritura (500ms)
     urlInput.addEventListener('input', function() {
         clearTimeout(urlInputDebounceTimer);
         urlInputDebounceTimer = setTimeout(() => {
@@ -105,7 +104,6 @@ function setupUrlInputAutoLoad() {
         }, 500);
     });
     
-    // Carga inmediata en blur
     urlInput.addEventListener('blur', function() {
         clearTimeout(urlInputDebounceTimer);
         if (this.value.trim()) {
@@ -113,7 +111,6 @@ function setupUrlInputAutoLoad() {
         }
     });
     
-    // Carga inmediata al pegar
     urlInput.addEventListener('paste', function() {
         clearTimeout(urlInputDebounceTimer);
         setTimeout(() => {
@@ -184,13 +181,11 @@ function processZip(files) {
     document.getElementById('statusCompressed').textContent = formatBytes(compressedSize);
     document.getElementById('statusRatio').textContent = ratio != 0 ? '(' + ratio + '%)' : '';
     
-    // Actualizar también los elementos de mobile
     const statusCompressedMobile = document.getElementById('statusCompressedMobile');
     const statusRatioMobile = document.getElementById('statusRatioMobile');
     if (statusCompressedMobile) statusCompressedMobile.textContent = formatBytes(compressedSize);
     if (statusRatioMobile) statusRatioMobile.textContent = ratio != 0 ? '(' + ratio + '%)' : '';
 
-    // Deshabilitar botones de expandir/contraer si no hay directorios
     const expandBtn = document.getElementById('expandBtn');
     const collapseBtn = document.getElementById('collapseBtn');
     if (dirCount === 0) {
@@ -207,7 +202,6 @@ function processZip(files) {
 
     fileTree.innerHTML = '';
     
-    // Construir árbol de directorios
     const tree = {};
     files.forEach(file => {
         const parts = file.path.split('/').filter(p => p);
@@ -224,7 +218,6 @@ function processZip(files) {
         });
     });
 
-    // Renderizar árbol
     function renderTree(node, level = 0, container = null) {
         const targetContainer = container || fileTree;
         const items = Object.entries(node).sort((a, b) => {
@@ -243,14 +236,12 @@ function processZip(files) {
             btn.style.paddingLeft = (level * 16 + 8) + 'px';
             
             if (item.file && !item.isDir) {
-                // Es un archivo
                 btn.innerHTML = '<span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
                 btn.onclick = () => previewFile(item.file, btn);
                 btn.className += ' hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer';
                 btn.dataset.filePath = item.file.path;
                 div.appendChild(btn);
             } else if (item.isDir) {
-                // Es un directorio
                 const hasChildren = Object.keys(item.children).length > 0;
                 const arrow = hasChildren ? '▼' : '';
                 btn.innerHTML = '<span class="flex-shrink-0 w-4">' + arrow + '</span><span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
@@ -260,7 +251,6 @@ function processZip(files) {
                 div.appendChild(btn);
                 
                 if (hasChildren) {
-                    // Registrar botón en array global
                     allDirectoryButtons.push(btn);
                     
                     const childrenDiv = document.createElement('div');
@@ -300,7 +290,6 @@ function previewFile(file, buttonElement) {
     let content = '';
     
     if (isImage && file.data) {
-        // Mostrar imagen
         const blob = new Blob([file.data], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         previewContent.innerHTML = '<img src="' + url + '" alt="' + file.path + '" class="max-w-full max-h-full object-contain" />';
@@ -308,7 +297,6 @@ function previewFile(file, buttonElement) {
         previewContent.style.alignItems = 'center';
         previewContent.style.justifyContent = 'center';
     } else if (isText && file.data) {
-        // Mostrar texto
         previewContent.style.display = 'block';
         try {
             const text = new TextDecoder().decode(file.data);
@@ -318,7 +306,6 @@ function previewFile(file, buttonElement) {
         }
         previewContent.textContent = content;
     } else {
-        // Archivo binario
         previewContent.style.display = 'flex';
         previewContent.style.alignItems = 'center';
         previewContent.style.justifyContent = 'center';
@@ -329,15 +316,12 @@ function previewFile(file, buttonElement) {
     preview.classList.remove('hidden');
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
-    // Guardar referencia del archivo actual para descarga
     window.currentPreviewFile = file;
     
-    // Remover clase activa del botón anterior
     if (activeFileButton) {
         activeFileButton.classList.remove('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
     }
     
-    // Agregar clase activa al botón actual
     if (buttonElement) {
         buttonElement.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
         activeFileButton = buttonElement;
@@ -374,7 +358,6 @@ async function loadZipFromUrl() {
         return;
     }
 
-    // Extraer nombre del archivo de la URL
     try {
         const url = new URL(urlInput);
         currentZipName = url.pathname.split('/').pop() || 'archivo.zip';
@@ -466,7 +449,6 @@ function loadZipFromFile(event) {
         return;
     }
 
-    // Guardar nombre del archivo y limpiar URL
     currentZipName = file.name;
     currentZipBlob = file;
     currentFiles = [];
@@ -568,11 +550,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.addEventListener('load', () => {
-    console.log('ZIP Preview v2.0.0 cargado');
-});
-
-// Drag and drop en todo el documento
 document.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -597,7 +574,6 @@ document.addEventListener('drop', (e) => {
     }
 });
 
-// Descargar archivo individual del ZIP
 function downloadCurrentFile() {
     if (!window.currentPreviewFile) {
         showError('No hay archivo seleccionado');
@@ -644,7 +620,6 @@ function downloadFile(file) {
         return;
     }
 
-    // Crear descarga directa del contenido ya cargado
     const blob = new Blob([file.data], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -677,7 +652,6 @@ function filterFileTree(searchTerm) {
     const searchLower = searchTerm.toLowerCase();
 
     if (!searchTerm) {
-        // Restaurar vista original
         allButtons.forEach(btn => {
             btn.parentElement.style.display = '';
             btn.classList.remove('opacity-50');
@@ -696,7 +670,6 @@ function filterFileTree(searchTerm) {
         return;
     }
 
-    // Encontrar coincidencias
     const matchedButtons = [];
     allButtons.forEach(btn => {
         const fileName = btn.dataset.filePath.split('/').pop().toLowerCase();
@@ -719,26 +692,22 @@ function filterFileTree(searchTerm) {
         return;
     }
 
-    // Ocultar todo primero
     allButtons.forEach(btn => {
         btn.parentElement.style.display = 'none';
         btn.classList.remove('opacity-50');
     });
     fileTree.querySelectorAll('.directory-contents').forEach(dir => dir.style.display = 'none');
 
-    // Para cada coincidencia, mostrar ella y todos sus padres
     matchedButtons.forEach(matchedBtn => {
         let current = matchedBtn.parentElement;
         
         while (current && current !== fileTree) {
             current.style.display = '';
             
-            // Si es contenedor de directorio, mostrarlo
             if (current.classList.contains('directory-contents')) {
                 current.style.display = 'block';
             }
             
-            // Buscar botón hermano en el mismo contenedor
             const sibling = current.querySelector('button[data-file-path]');
             if (sibling && sibling !== matchedBtn) {
                 sibling.classList.add('opacity-50');
@@ -747,7 +716,6 @@ function filterFileTree(searchTerm) {
             current = current.parentElement;
         }
         
-        // El botón encontrado no tiene opacidad
         matchedBtn.classList.remove('opacity-50');
     });
 

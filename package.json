@@ -8,8 +8,5 @@
     "start": "node server.js"
   },
   "keywords": ["zip", "preview", "serverless"],
-  "license": "ISC",
-  "dependencies": {
-    "jszip": "^3.10.1"
-  }
+  "license": "ISC"
 }
