@@ -16,13 +16,7 @@
     </script>
     <style>
         * { @apply transition-colors; }
-        body { @apply bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50; }
-        input { @apply bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent; }
-        button { @apply bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950; }
-        button.secondary { @apply bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 hover:bg-zinc-200 dark:hover:bg-zinc-700; }
-        button.outline { @apply bg-transparent border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 hover:bg-zinc-50 dark:hover:bg-zinc-900; }
-        .card { @apply border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900; }
-        .file-preview { @apply bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded p-4 font-mono text-xs text-zinc-600 dark:text-zinc-400 overflow-auto whitespace-pre-wrap break-words; }
+        #previewContent { @apply whitespace-pre-wrap; word-break: break-word; }
         #fileTree::-webkit-scrollbar { @apply w-1.5; }
         #fileTree::-webkit-scrollbar-track { @apply bg-transparent; }
         #fileTree::-webkit-scrollbar-thumb { @apply bg-zinc-300 dark:bg-zinc-700 rounded hover:bg-zinc-400 dark:hover:bg-zinc-600; }
@@ -44,9 +38,9 @@
                         type="text" 
                         id="urlInput" 
                         placeholder="URL del ZIP"
-                        class="!py-1.5 text-xs w-48"
+                        class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent w-48"
                     >
-                    <button onclick="loadZipFromUrl()" class="!py-1.5 !px-3 text-xs">Cargar</button>
+                    <button onclick="loadZipFromUrl()" class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950">Cargar</button>
                     
                     <div class="border-l border-zinc-200 dark:border-zinc-800 pl-3">
                         <label for="fileInput" class="cursor-pointer text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 inline-flex items-center gap-1">
@@ -70,9 +64,13 @@
             <!-- Results Section -->
             <div id="results" class="hidden h-[calc(100vh-200px)]">
                 <!-- File Browser -->
-                <div class="card overflow-hidden flex flex-col h-full">
+                <div class="border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 overflow-hidden flex flex-col h-full">
                     <!-- Stats Bar -->
                     <div class="flex border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-xs">
+                        <div class="flex-1 px-4 py-2 border-r border-zinc-200 dark:border-zinc-800">
+                            <div class="font-semibold text-zinc-900 dark:text-zinc-50 truncate" id="fileName">-</div>
+                            <div class="text-zinc-500 dark:text-zinc-400">ZIP</div>
+                        </div>
                         <div class="flex-1 px-4 py-2 border-r border-zinc-200 dark:border-zinc-800">
                             <div class="font-semibold text-zinc-900 dark:text-zinc-50" id="fileCount">0</div>
                             <div class="text-zinc-500 dark:text-zinc-400">Archivos</div>
@@ -92,7 +90,7 @@
                         <!-- File Tree -->
                         <div class="w-1/3 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto">
                             <div class="p-3">
-                                <h3 class="text-xs font-semibold mb-2 text-zinc-700 dark:text-zinc-300 sticky top-0 bg-white dark:bg-zinc-900 py-1">Archivos</h3>
+                                <h3 class="text-xs font-semibold mb-2 text-zinc-800 dark:text-zinc-100 sticky top-0 bg-white dark:bg-zinc-900 py-1">Archivos</h3>
                                 <div id="fileTree" class="space-y-0 text-sm"></div>
                             </div>
                         </div>
@@ -100,10 +98,13 @@
                         <!-- File Preview -->
                         <div class="w-2/3 overflow-y-auto">
                             <div id="filePreview" class="hidden p-3 h-full flex flex-col">
-                                <div class="mb-2 pb-2 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 py-1">
-                                    <h3 class="text-xs font-semibold text-zinc-700 dark:text-zinc-300" id="previewTitle"></h3>
+                                <div class="mb-2 pb-2 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 py-1 flex items-center justify-between">
+                                    <h3 class="text-xs font-semibold text-zinc-800 dark:text-zinc-100" id="previewTitle"></h3>
+                                    <button onclick="downloadCurrentFile()" class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-2 py-1 rounded-md text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:ring-offset-2 dark:focus:ring-offset-zinc-950" title="Descargar archivo">
+                                        ⬇️ Descargar
+                                    </button>
                                 </div>
-                                <div id="previewContent" class="file-preview flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950"></div>
+                                <div id="previewContent" class="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded p-4 font-mono text-xs text-zinc-700 dark:text-zinc-300 overflow-auto flex-1 whitespace-pre-wrap"></div>
                             </div>
                             <div id="emptyState" class="p-3 text-center text-zinc-500 dark:text-zinc-400 h-full flex items-center justify-center">
                                 <p class="text-xs">Selecciona un archivo para visualizar</p>

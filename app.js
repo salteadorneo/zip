@@ -53,6 +53,8 @@ function setLoading(isLoading) {
 
 let currentZip = null;
 let currentFiles = [];
+let currentZipName = '';
+let activeFileButton = null;
 
 function initFromQueryString() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -73,6 +75,7 @@ function processZip(files) {
     const dirCount = files.filter(f => f.isDir).length;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
 
+    document.getElementById('fileName').textContent = currentZipName;
     document.getElementById('fileCount').textContent = fileCount;
     document.getElementById('dirCount').textContent = dirCount;
     document.getElementById('totalSize').textContent = formatBytes(totalSize);
@@ -111,13 +114,14 @@ function processZip(files) {
             
             const icon = item.isDir ? '📁' : '📄';
             const btn = document.createElement('button');
-            btn.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-zinc-100 text-sm truncate text-zinc-700 flex items-center gap-2';
+            btn.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm truncate text-zinc-800 dark:text-zinc-100 flex items-center gap-2 transition-colors';
             btn.style.paddingLeft = (level * 16 + 8) + 'px';
             btn.innerHTML = '<span class="flex-shrink-0">' + icon + '</span><span class="flex-1 truncate">' + name + '</span>';
             
             if (item.file && !item.isDir) {
-                btn.onclick = () => previewFile(item.file);
-                btn.className += ' hover:text-blue-600 cursor-pointer';
+                btn.onclick = () => previewFile(item.file, btn);
+                btn.className += ' hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer';
+                btn.dataset.filePath = item.file.path;
             }
             
             div.appendChild(btn);
@@ -135,7 +139,7 @@ function processZip(files) {
     resultsSection.classList.remove('hidden');
 }
 
-function previewFile(file) {
+function previewFile(file, buttonElement) {
     const preview = document.getElementById('filePreview');
     const previewTitle = document.getElementById('previewTitle');
     const previewContent = document.getElementById('previewContent');
@@ -157,6 +161,20 @@ function previewFile(file) {
     previewContent.textContent = content;
     preview.classList.remove('hidden');
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Guardar referencia del archivo actual para descarga
+    window.currentPreviewFile = file;
+    
+    // Remover clase activa del botón anterior
+    if (activeFileButton) {
+        activeFileButton.classList.remove('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
+    }
+    
+    // Agregar clase activa al botón actual
+    if (buttonElement) {
+        buttonElement.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
+        activeFileButton = buttonElement;
+    }
 }
 
 function isTextFile(fileName) {
@@ -177,6 +195,14 @@ async function loadZipFromUrl() {
     if (!urlInput) {
         showError('Por favor, ingresa una URL valida');
         return;
+    }
+
+    // Extraer nombre del archivo de la URL
+    try {
+        const url = new URL(urlInput);
+        currentZipName = url.pathname.split('/').pop() || 'archivo.zip';
+    } catch {
+        currentZipName = 'archivo.zip';
     }
 
     setLoading(true);
@@ -251,6 +277,11 @@ async function loadZipFromFile(event) {
         event.target.value = '';
         return;
     }
+
+    // Guardar nombre del archivo y limpiar URL
+    currentZipName = file.name;
+    window.history.replaceState({}, document.title, window.location.pathname);
+    document.getElementById('urlInput').value = '';
 
     setLoading(true);
     console.log('Cargando archivo local:', file.name);
@@ -338,11 +369,19 @@ window.addEventListener('load', () => {
 });
 
 // Descargar archivo individual del ZIP
-function downloadFile(file, zipUrl) {
-    console.log('Descargando: ' + file.path + ' desde ' + zipUrl);
+function downloadCurrentFile() {
+    if (!window.currentPreviewFile) {
+        showError('No hay archivo seleccionado');
+        return;
+    }
+    downloadFile(window.currentPreviewFile);
+}
+
+function downloadFile(file) {
+    console.log('Descargando: ' + file.path);
     
     if (!file.data) {
-        alert('No hay datos del archivo para descargar');
+        showError('No hay datos del archivo para descargar');
         return;
     }
 
@@ -356,4 +395,5 @@ function downloadFile(file, zipUrl) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    showSuccess('Archivo descargado: ' + link.download);
 }
