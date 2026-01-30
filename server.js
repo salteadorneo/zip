@@ -2,11 +2,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const { request } = require('undici');
 
 const PORT = process.env.PORT || 3000;
 
-// Funcion para seguir redirecciones
+// Funcion para seguir redirecciones con fetch nativo
 async function fetchWithRedirects(targetUrl, maxRedirects = 5) {
     let currentUrl = targetUrl;
     let redirectCount = 0;
@@ -17,33 +16,42 @@ async function fetchWithRedirects(targetUrl, maxRedirects = 5) {
 
         console.log('  Fetching: ' + currentUrl.substring(0, 80) + '...');
 
-        const response = await request(currentUrl, {
-            method: 'GET',
-            headersTimeout: 30000,
-            bodyTimeout: 30000,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': '*/*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': refererUrl
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            const response = await fetch(currentUrl, {
+                method: 'GET',
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Referer': refererUrl
+                },
+                redirect: 'manual'
+            });
+
+            clearTimeout(timeout);
+
+            console.log('  Status: ' + response.status);
+
+            if ([301, 302, 303, 307, 308].includes(response.status)) {
+                const location = response.headers.get('location');
+                if (!location) throw new Error('Redirect sin Location header');
+                currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).toString();
+                redirectCount++;
+                continue;
             }
-        });
 
-        console.log('  Status: ' + response.statusCode);
+            if (response.status < 200 || response.status >= 300) {
+                throw new Error('HTTP ' + response.status);
+            }
 
-        if ([301, 302, 303, 307, 308].includes(response.statusCode)) {
-            const location = response.headers.location;
-            if (!location) throw new Error('Redirect sin Location header');
-            currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).toString();
-            redirectCount++;
-            continue;
+            return response;
+        } finally {
+            clearTimeout(timeout);
         }
-
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-            throw new Error('HTTP ' + response.statusCode);
-        }
-
-        return response;
     }
 
     throw new Error('Demasiadas redirecciones');
@@ -89,11 +97,8 @@ http.createServer(async (req, res) => {
             const response = await fetchWithRedirects(targetUrl);
 
             // Buffer contenido completo
-            const chunks = [];
-            for await (const chunk of response.body) {
-                chunks.push(chunk);
-            }
-            const buffer = Buffer.concat(chunks);
+            const buffer = await response.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
 
             const urlPath = new URL(targetUrl).pathname;
             const fileName = urlPath.split('/').pop() || 'archivo.zip';
@@ -102,12 +107,12 @@ http.createServer(async (req, res) => {
                 'Content-Type': 'application/octet-stream',
                 'Cache-Control': 'public, max-age=86400',
                 'Content-Disposition': 'attachment; filename="' + fileName + '"',
-                'Content-Length': buffer.length
+                'Content-Length': bytes.length
             };
 
-            console.log('Enviando respuesta: ' + buffer.length + ' bytes');
+            console.log('Enviando respuesta: ' + bytes.length + ' bytes');
             res.writeHead(200, headers);
-            res.end(buffer);
+            res.end(Buffer.from(bytes));
         } catch (err) {
             console.error('Error: ' + err.message);
             res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -130,19 +135,16 @@ http.createServer(async (req, res) => {
 
         try {
             const response = await fetchWithRedirects(targetUrl);
-            const chunks = [];
-            for await (const chunk of response.body) {
-                chunks.push(chunk);
-            }
-            const buffer = Buffer.concat(chunks);
+            const buffer = await response.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
 
             // Devolver el ZIP completo, el cliente extrae con JSZip
             res.writeHead(200, {
                 'Content-Type': 'application/octet-stream',
-                'Content-Length': buffer.length,
+                'Content-Length': bytes.length,
                 'X-File-Path': filePath
             });
-            res.end(buffer);
+            res.end(Buffer.from(bytes));
         } catch (err) {
             console.error('Error: ' + err.message);
             res.writeHead(500, { 'Content-Type': 'application/json' });
