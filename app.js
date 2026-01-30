@@ -531,3 +531,20 @@ function collapseAllDirectories() {
         }
     });
 }
+
+function downloadZipFile() {
+    if (!currentZipBlob) {
+        showError('No hay archivo ZIP cargado');
+        return;
+    }
+    
+    const url = URL.createObjectURL(currentZipBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = currentZipName || 'archivo.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showSuccess('ZIP descargado: ' + (currentZipName || 'archivo.zip'));
+}
