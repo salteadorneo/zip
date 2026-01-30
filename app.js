@@ -1,4 +1,23 @@
-// Utilidades
+// Esperar a que JSZip cargue
+function ensureZipLoaded() {
+    return new Promise((resolve) => {
+        if (typeof JSZip !== 'undefined') {
+            resolve();
+        } else {
+            const checkInterval = setInterval(() => {
+                if (typeof JSZip !== 'undefined') {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve();
+            }, 5000);
+        }
+    });
+}
+
 function formatBytes(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -32,11 +51,9 @@ function setLoading(isLoading) {
     }
 }
 
-// Variables globales
 let currentZip = null;
 let currentFiles = [];
 
-// Auto-cargar ZIP desde par√°metro URL
 function initFromQueryString() {
     const urlParams = new URLSearchParams(window.location.search);
     const zipUrl = urlParams.get('url');
@@ -46,13 +63,11 @@ function initFromQueryString() {
     }
 }
 
-// Procesar y mostrar ZIP
 function processZip(files) {
     const resultsSection = document.getElementById('results');
     const fileList = document.getElementById('fileList');
     const filePreview = document.getElementById('filePreview');
 
-    // Contar archivos y directorios
     const fileCount = files.filter(f => !f.isDir).length;
     const dirCount = files.filter(f => f.isDir).length;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
@@ -61,28 +76,20 @@ function processZip(files) {
     document.getElementById('dirCount').textContent = dirCount;
     document.getElementById('totalSize').textContent = formatBytes(totalSize);
 
-    // Limpiar lista anterior
     fileList.innerHTML = '';
     filePreview.innerHTML = '';
     filePreview.classList.add('hidden');
 
-    // Mostrar archivos
-    files.forEach((file, index) => {
+    files.forEach((file) => {
         const item = document.createElement('div');
         item.className = 'file-item';
         
         const icon = file.isDir ? 'Ì≥Å' : 'Ì≥Ñ';
         const name = file.path.split('/').pop() || file.path;
-        const size = file.isDir ? '' : `<div class="file-size">${formatBytes(file.size)}</div>`;
+        const size = file.isDir ? '' : '<div class="file-size">' + formatBytes(file.size) + '</div>';
 
-        item.innerHTML = `
-            <div class="file-info">
-                <div class="file-name">${icon} ${name}</div>
-                ${size}
-            </div>
-        `;
+        item.innerHTML = '<div class="file-info"><div class="file-name">' + icon + ' ' + name + '</div>' + size + '</div>';
 
-        // Click para preview
         if (!file.isDir) {
             item.onclick = () => previewFile(file);
         } else {
@@ -95,7 +102,6 @@ function processZip(files) {
     resultsSection.classList.remove('hidden');
 }
 
-// Preview de archivo
 function previewFile(file) {
     const preview = document.getElementById('filePreview');
     const isText = isTextFile(file.path);
@@ -112,13 +118,8 @@ function previewFile(file) {
         content = '[Archivo binario - no se puede previsualiziar]';
     }
 
-    preview.innerHTML = `
-        <div class="file-preview-header">Ì≥Ñ ${file.path}</div>
-        <div class="file-preview-content">${escapeHtml(content)}</div>
-    `;
+    preview.innerHTML = '<div class="file-preview-header">' + file.path + '</div><div class="file-preview-content">' + escapeHtml(content) + '</div>';
     preview.classList.remove('hidden');
-
-    // Scroll al preview
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -140,141 +141,143 @@ function isTextFile(fileName) {
     return textExtensions.includes(ext);
 }
 
-// Cargar ZIP desde URL
 async function loadZipFromUrl() {
     const urlInput = document.getElementById('urlInput').value.trim();
 
     if (!urlInput) {
-        showError('Por favor, ingresa una URL v√°lida');
+        showError('Por favor, ingresa una URL valida');
         return;
     }
 
     setLoading(true);
-    console.log('Ì≥• Cargando desde URL:', urlInput);
+    console.log('Cargando desde URL:', urlInput);
 
     try {
-        // Usar el proxy del servidor
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(urlInput)}`;
-        console.log('Ì¥ó Proxy URL:', proxyUrl);
+        await ensureZipLoaded();
+        if (typeof JSZip === 'undefined') {
+            throw new Error('JSZip no se cargo. Recarga la pagina.');
+        }
+
+        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(urlInput);
+        console.log('Usando proxy:', proxyUrl);
 
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
 
-        console.log('‚úì Respuesta recibida');
+        console.log('Respuesta OK');
         const arrayBuffer = await response.arrayBuffer();
-        console.log('‚úì ArrayBuffer:', formatBytes(arrayBuffer.byteLength));
+        console.log('Datos recibidos:', formatBytes(arrayBuffer.byteLength));
 
-        // Procesar con zip.js
-        console.log('2Ô∏è‚É£ Procesando ZIP...');
-        const blobReader = new zip.BlobReader(new Blob([arrayBuffer]));
-        const zipReader = new zip.ZipReader(blobReader);
-        const entries = await zipReader.getEntries();
+        console.log('Procesando ZIP...');
+        const zip = new JSZip();
+        const loaded = await zip.loadAsync(arrayBuffer);
 
         currentFiles = [];
+        const entries = Object.keys(loaded.files);
 
-        for (const entry of entries) {
-            if (!entry.directory) {
-                const data = await entry.getData(new zip.ArrayBufferWriter());
+        for (const path of entries) {
+            const file = loaded.files[path];
+            
+            if (file.dir) {
                 currentFiles.push({
-                    path: entry.filename,
-                    size: entry.uncompressed,
-                    data: new Uint8Array(data),
-                    isDir: false
-                });
-            } else {
-                currentFiles.push({
-                    path: entry.filename,
+                    path: path,
                     size: 0,
                     data: null,
                     isDir: true
                 });
+            } else {
+                const data = await file.async('uint8array');
+                currentFiles.push({
+                    path: path,
+                    size: file.uncompressedSize || data.length,
+                    data: data,
+                    isDir: false
+                });
             }
         }
 
-        await zipReader.close();
-        
-        console.log('‚úì ZIP procesado:', currentFiles.length, 'elementos');
+        console.log('ZIP procesado:', currentFiles.length, 'elementos');
         processZip(currentFiles);
-        showSuccess('‚úì ZIP cargado correctamente');
+        showSuccess('ZIP cargado correctamente');
 
     } catch (error) {
-        console.error('‚ùå Error:', error);
-        showError(`Error: ${error.message}`);
+        console.error('Error:', error);
+        showError('Error: ' + error.message);
     } finally {
         setLoading(false);
     }
 }
 
-// Cargar ZIP desde archivo local
 async function loadZipFromFile(event) {
     const file = event.target.files[0];
 
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.zip')) {
-        showError('Por favor, selecciona un archivo ZIP v√°lido');
+        showError('Por favor, selecciona un archivo ZIP valido');
         event.target.value = '';
         return;
     }
 
     setLoading(true);
-    console.log('Ì≥Å Cargando archivo local:', file.name);
+    console.log('Cargando archivo local:', file.name);
 
     try {
-        const blobReader = new zip.BlobReader(file);
-        const zipReader = new zip.ZipReader(blobReader);
-        const entries = await zipReader.getEntries();
+        await ensureZipLoaded();
+        if (typeof JSZip === 'undefined') {
+            throw new Error('JSZip no se cargo');
+        }
+
+        const zip = new JSZip();
+        const loaded = await zip.loadAsync(file);
 
         currentFiles = [];
+        const entries = Object.keys(loaded.files);
 
-        for (const entry of entries) {
-            if (!entry.directory) {
-                const data = await entry.getData(new zip.ArrayBufferWriter());
+        for (const path of entries) {
+            const fileEntry = loaded.files[path];
+            
+            if (fileEntry.dir) {
                 currentFiles.push({
-                    path: entry.filename,
-                    size: entry.uncompressed,
-                    data: new Uint8Array(data),
-                    isDir: false
-                });
-            } else {
-                currentFiles.push({
-                    path: entry.filename,
+                    path: path,
                     size: 0,
                     data: null,
                     isDir: true
                 });
+            } else {
+                const data = await fileEntry.async('uint8array');
+                currentFiles.push({
+                    path: path,
+                    size: fileEntry.uncompressedSize || data.length,
+                    data: data,
+                    isDir: false
+                });
             }
         }
 
-        await zipReader.close();
-        
-        console.log('‚úì ZIP procesado:', currentFiles.length, 'elementos');
+        console.log('ZIP procesado:', currentFiles.length, 'elementos');
         processZip(currentFiles);
-        showSuccess('‚úì Archivo cargado correctamente');
+        showSuccess('Archivo cargado correctamente');
 
     } catch (error) {
-        console.error('‚ùå Error:', error);
-        showError(`Error: ${error.message}`);
+        console.error('Error:', error);
+        showError('Error: ' + error.message);
     } finally {
         setLoading(false);
     }
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Cargar desde query string si existe
     initFromQueryString();
 
-    // File input
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
         fileInput.addEventListener('change', loadZipFromFile);
     }
 
-    // Drag & drop
     const dropZone = document.getElementById('dropZone');
     if (dropZone) {
         dropZone.addEventListener('dragover', (e) => {
@@ -301,5 +304,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('load', () => {
-    console.log('‚úì ZIP Preview v2.0.0 cargado');
+    console.log('ZIP Preview v2.0.0 cargado');
 });

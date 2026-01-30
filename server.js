@@ -78,6 +78,16 @@ http.createServer(async (req, res) => {
         return;
     }
 
+    // Si la ruta es /http... o /https..., redirigir a /?url=...
+    if (pathname.startsWith('/http://') || pathname.startsWith('/https://')) {
+        const zipUrl = pathname.substring(1); // Remover el primer /
+        const redirectUrl = '/?url=' + encodeURIComponent(zipUrl);
+        console.log(`🔄 Redirigiendo a: ${redirectUrl}`);
+        res.writeHead(302, { 'Location': redirectUrl });
+        res.end();
+        return;
+    }
+
     // API Proxy para descargar ZIPs
     if (pathname === '/api/proxy') {
         if (!query.url) {
@@ -92,23 +102,27 @@ http.createServer(async (req, res) => {
         try {
             const response = await fetchWithRedirects(targetUrl);
 
+            // Buffer el contenido completo
+            const chunks = [];
+            for await (const chunk of response.body) {
+                chunks.push(chunk);
+            }
+            const buffer = Buffer.concat(chunks);
+
             // Extraer nombre del archivo de la URL
             const urlPath = new URL(targetUrl).pathname;
             const fileName = urlPath.split('/').pop() || 'archivo.zip';
 
             const headers = {
-                'Content-Type': response.headers['content-type'] || 'application/octet-stream',
+                'Content-Type': 'application/octet-stream',
                 'Cache-Control': 'public, max-age=86400',
-                'Content-Disposition': `attachment; filename="${fileName}"`
+                'Content-Disposition': `attachment; filename="${fileName}"`,
+                'Content-Length': buffer.length
             };
 
-            if (response.headers['content-length']) {
-                headers['Content-Length'] = response.headers['content-length'];
-            }
-
-            console.log(`✅ Enviando respuesta (${response.statusCode})`);
+            console.log(`✅ Enviando respuesta (${response.statusCode}, ${buffer.length} bytes)`);
             res.writeHead(response.statusCode, headers);
-            response.body.pipe(res);
+            res.end(buffer);
         } catch (err) {
             console.error(`❌ Proxy error: ${err.message}`);
             res.writeHead(500, { 'Content-Type': 'application/json' });
