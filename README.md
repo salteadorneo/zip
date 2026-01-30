@@ -2,8 +2,8 @@
 
 A lightweight, fast web tool to **explore, preview and download ZIP files directly in the browser** without downloading the entire file first. Perfect for sharing and browsing ZIP contents instantly.
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
-![License](https://img.shields.io/badge/license-ISC-green)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
