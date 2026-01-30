@@ -6,8 +6,8 @@ import {
     processZipEntries,
     buildFileTree,
     calculateCompressionRatio
-} from './lib/core.js';
-// Tests for ZIP validation
+} from './core.js';
+
 test('validateZipFile - should accept .zip files', () => {
     assert.ok(validateZipFile({ name: 'archive.zip' }));
     assert.ok(validateZipFile({ name: 'document.ZIP' }));

@@ -725,3 +725,85 @@ function downloadZipFile() {
     URL.revokeObjectURL(url);
     showSuccess('ZIP descargado: ' + (currentZipName || 'archivo.zip'));
 }
+
+export function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+export function isTextFile(fileName) {
+    const textExtensions = [
+        'txt', 'md', 'markdown', 'json', 'xml', 'csv', 'html', 'htm', 'css',
+        'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'h', 'php',
+        'rb', 'go', 'rs', 'sh', 'bash', 'yml', 'yaml', 'sql', 'r', 'log',
+        'env', 'properties', 'gradle', 'maven', 'dockerfile', 'gitignore',
+        'editorconfig', 'eslintrc', 'prettierrc', 'babelrc'
+    ];
+    const ext = fileName.split('.').pop().toLowerCase();
+    return textExtensions.includes(ext);
+}
+
+export function isImageFile(fileName) {
+    const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+    const ext = fileName.split('.').pop().toLowerCase();
+    return imageExtensions.includes(ext);
+}
+
+export function validateZipFile(file) {
+    if (!file) return false;
+    const name = file.name || file.toLowerCase();
+    return name.toLowerCase().endsWith('.zip');
+}
+
+export function createZipFileEntry(path, size = 0, isDir = false) {
+    return {
+        path: path,
+        size: size,
+        data: isDir ? null : new Uint8Array(size),
+        isDir: isDir
+    };
+}
+
+export function processZipEntries(entries) {
+    const files = [];
+    const dirs = [];
+    
+    entries.forEach(entry => {
+        if (entry.isDir) {
+            dirs.push(entry);
+        } else {
+            files.push(entry);
+        }
+    });
+    
+    return { files, dirs, total: entries.length };
+}
+
+export function buildFileTree(entries) {
+    const tree = {};
+    
+    entries.forEach(entry => {
+        const parts = entry.path.split('/').filter(p => p);
+        let current = tree;
+        
+        parts.forEach((part, index) => {
+            if (!current[part]) {
+                current[part] = { children: {}, file: null, isDir: true };
+            }
+            if (index === parts.length - 1 && !entry.isDir) {
+                current[part] = { ...current[part], file: entry, isDir: false };
+            }
+            current = current[part].children;
+        });
+    });
+    
+    return tree;
+}
+
+export function calculateCompressionRatio(uncompressed, compressed) {
+    if (uncompressed === 0) return 0;
+    return ((compressed / uncompressed - 1) * 100).toFixed(1);
+}

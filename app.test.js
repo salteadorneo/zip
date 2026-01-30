@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { formatBytes, isTextFile, isImageFile } from './lib/core.js';
+import { formatBytes, isTextFile, isImageFile } from './core.js';
 
 test('formatBytes - should convert 0 bytes correctly', () => {
     assert.equal(formatBytes(0), '0 Bytes');
