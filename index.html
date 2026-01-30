@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZIP</title>
+    <script src="lang.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/node_modules/jszip/dist/jszip.min.js"></script>
     <script>
@@ -59,22 +60,22 @@
             <div class="px-4 py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4">
                 <div class="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                     <h1 class="text-xl md:text-2xl font-semibold whitespace-nowrap flex-shrink-0">ZIP</h1>
-                    <input type="text" id="searchInput" placeholder="Buscar archivos..."
+                    <input type="text" id="searchInput" placeholder="Search files..."
                         class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 flex-1 min-w-0 md:w-64"
                         oninput="filterFileTree(this.value)">
                 </div>
                 <div class="flex items-center gap-2 md:gap-3 flex-wrap md:flex-nowrap">
-                    <input type="text" id="urlInput" placeholder="URL del ZIP"
+                    <input type="text" id="urlInput" placeholder="ZIP URL"
                         class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent flex-1 md:flex-none md:w-48">
                     <button onclick="loadZipFromUrl()"
                         class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex-shrink-0"
-                        title="Cargar desde URL">
+                        title="Load from URL">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></svg>
                     </button>
 
                     <label for="fileInput"
                         class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex-shrink-0 cursor-pointer"
-                        title="Subir archivo ZIP">
+                        title="Upload ZIP file">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-upload"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
                     </label>
                     <input type="file" id="fileInput" accept=".zip" class="hidden">
@@ -88,7 +89,7 @@
             <div
                 class="animate-spin h-3 w-3 border border-blue-600 dark:border-blue-400 border-t-transparent rounded-full">
             </div>
-            <span>Cargando...</span>
+            <span>Loading...</span>
         </div>
         <div id="error"
             class="hidden fixed bottom-4 right-4 px-4 py-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-xs text-red-600 dark:text-red-400 rounded-lg shadow-lg z-50">
@@ -109,10 +110,10 @@
                 <!-- Description -->
                 <div class="text-center max-w-md">
                     <p class="text-lg text-zinc-600 dark:text-zinc-400 mb-2">
-                        Explora archivos ZIP sin descargarlos
+                        Explore ZIP files without downloading
                     </p>
                     <p class="text-sm text-zinc-500 dark:text-zinc-500">
-                        Abre, visualiza y descarga archivos individuales directamente desde tu navegador
+                        Open, view and download individual files directly from your browser
                     </p>
                 </div>
 
@@ -121,17 +122,25 @@
                     <!-- Option 1: Upload / Drag and Drop -->
                     <div class="p-6 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors text-center border-b border-zinc-200 dark:border-zinc-800" id="welcomeDropZone">
                         <label for="welcomeFileInput" class="block cursor-pointer">
-                            <p class="text-base font-medium text-zinc-900 dark:text-zinc-50 mb-1">Arrastra, pulsa aquí para subir</p>
-                            <p class="text-sm text-zinc-500 dark:text-zinc-400">o escribe la URL abajo</p>
+                            <p class="text-base font-medium text-zinc-900 dark:text-zinc-50 mb-1">Drag, click here to upload</p>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">or write the URL below</p>
                         </label>
                         <input type="file" id="welcomeFileInput" accept=".zip" class="hidden">
                     </div>
 
                     <!-- Option 2: URL -->
                     <div class="p-6">
-                        <input type="text" id="welcomeUrlInput" placeholder="https://ejemplo.com/archivo.zip"
+                        <input type="text" id="welcomeUrlInput" placeholder="https://example.com/archive.zip"
                             class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-base text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent w-full">
                     </div>
+                </div>
+
+                <!-- GitHub Link -->
+                <div class="text-center mt-4">
+                    <a href="https://github.com/salteadorneo/zip" target="_blank" class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors flex items-center justify-center gap-1">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                        salteadorneo/zip v1.0.0
+                    </a>
                 </div>
             </div>
 
@@ -147,14 +156,14 @@
                             <div class="p-3 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
                                 <div class="flex items-center justify-between">
                                     <h3 class="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate flex-1 cursor-pointer hover:underline"
-                                        id="fileName" onclick="downloadZipFile()" title="Clic para descargar">-</h3>
+                                        id="fileName" onclick="downloadZipFile()" title="Click to download">-</h3>
                                     <div class="flex gap-1 flex-shrink-0">
                                         <button id="expandBtn" onclick="expandAllDirectories()"
                                             class="px-2 py-0.5 text-xs rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
-                                            title="Expandir todo">+</button>
+                                            title="Expand all">+</button>
                                         <button id="collapseBtn" onclick="collapseAllDirectories()"
                                             class="px-2 py-0.5 text-xs rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
-                                            title="Contraer todo">−</button>
+                                            title="Collapse all">−</button>
                                     </div>
                                 </div>
                             </div>
@@ -173,12 +182,12 @@
                                     <div class="flex items-center gap-2">
                                         <button onclick="copyToClipboard()"
                                             class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                                            title="Copiar contenido">
+                                            title="Copy">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" /><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.657 1.343 -3 3 -3h10c.75 0 1.158 .385 1.5 1" /></svg>
                                         </button>
                                         <button onclick="downloadCurrentFile()"
                                             class="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                                            title="Descargar archivo">
+                                            title="Download">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
                                         </button>
                                     </div>
@@ -189,7 +198,7 @@
                             </div>
                             <div id="emptyState"
                                 class="p-3 text-center text-zinc-500 dark:text-zinc-400 h-full flex items-center justify-center">
-                                <p class="text-xs">Selecciona un archivo para visualizar</p>
+                                <p class="text-xs">Select a file to view</p>
                             </div>
                         </div>
                     </div>
@@ -200,10 +209,10 @@
         <!-- Status Bar -->
         <footer id="statusBar"
             class="hidden border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 px-4 py-1.5 flex items-center gap-4 flex-wrap">
-            <span>Archivos: <span id="statusFileCount">0</span></span>
-            <span>Carpetas: <span id="statusDirCount">0</span></span>
-            <span class="hidden md:inline ml-auto">Tamaño: <span id="statusSize">0 B</span></span>
-            <span class="hidden md:inline">Comprimido: <span id="statusCompressed">0 B</span> <span id="statusRatio"></span></span>
+            <span>Files: <span id="statusFileCount">0</span></span>
+            <span>Folders: <span id="statusDirCount">0</span></span>
+            <span class="hidden md:inline ml-auto">Size: <span id="statusSize">0 B</span></span>
+            <span class="hidden md:inline">Compressed: <span id="statusCompressed">0 B</span> <span id="statusRatio"></span></span>
             <span class="md:hidden ml-auto"><span id="statusCompressedMobile">0 B</span> <span id="statusRatioMobile"></span></span>
         </footer>
     </div>

@@ -1,0 +1,22 @@
+{
+  "title": "ZIP",
+  "description": "Explora archivos ZIP sin descargarlos",
+  "details": "Abre, visualiza y descarga archivos individuales directamente desde tu navegador",
+  "upload_label": "Arrastra, pulsa aquí para subir",
+  "upload_hint": "o escribe la URL abajo",
+  "url_placeholder": "https://ejemplo.com/archivo.zip",
+  "loading": "Cargando...",
+  "error_invalid_zip": "Por favor, selecciona un archivo ZIP válido",
+  "error_loading_url": "Error cargando ZIP desde la URL",
+  "success_loaded": "ZIP cargado exitosamente",
+  "files": "Archivos",
+  "folders": "Carpetas",
+  "size": "Tamaño",
+  "compressed": "Comprimido",
+  "expand_all": "Expandir todo",
+  "collapse_all": "Contraer todo",
+  "search_files": "Buscar archivos...",
+  "copy": "Copiar",
+  "download": "Descargar",
+  "select_file": "Selecciona un archivo para visualizar"
+}
