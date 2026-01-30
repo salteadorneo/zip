@@ -1,4 +1,4 @@
-# ZIP Preview
+# ZIP
 
 A lightweight, fast web tool to **explore, preview and download ZIP files directly in the browser** without downloading the entire file first. Perfect for sharing and browsing ZIP contents instantly.
 
@@ -113,8 +113,8 @@ npm start
 
 ### Option 3: Docker
 ```bash
-docker build -t zip-preview .
-docker run -p 3000:3000 zip-preview
+docker build -t zip .
+docker run -p 3000:3000 zip
 ```
 
 ## Advanced
@@ -175,9 +175,9 @@ lib/
 - 🏠 **File Management** - Quick preview of backups and archives
 - 🔍 **Document Review** - Inspect ZIP contents before extracting
 
-## Why ZIP Preview?
+## Why ZIP?
 
-| Feature | Upptime | Status Monitor | ZIP Preview |
+| Feature | Upptime | Status Monitor | ZIP |
 |---------|---------|----------------|-------------|
 | Setup | Complex | Simple | Trivial |
 | No Dependencies | ❌ | ✅ | ✅ |

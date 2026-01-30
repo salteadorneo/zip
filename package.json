@@ -1,7 +1,7 @@
 {
-  "name": "extractfile-zip",
+  "name": "zip",
   "version": "1.0.0",
-  "description": "Preview de archivos ZIP sin descargar",
+  "description": "Explore, preview and download ZIP files in the browser",
   "main": "server.js",
   "scripts": {
     "dev": "node --watch-path=. server.js",
