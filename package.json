@@ -1,6 +1,6 @@
 {
   "name": "zip",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Explore, preview and download ZIP files in the browser",
   "type": "module",
   "main": "server.js",
